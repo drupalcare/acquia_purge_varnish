@@ -1,0 +1,17 @@
+acquia_purge_varnish.form:
+  path: '/admin/config/acquia-purge-varnish-form'
+  defaults:
+    _title: 'Acquia API Credentials'
+    _form: '\Drupal\acquia_purge_varnish\Form\AcquiaPurgeVarnishForm'
+  requirements:
+    _permission: 'administer site configuration'
+acquia_purge_varnish.cache:
+  path: '/admin/config/acquia-purge/varnish'
+  defaults:
+    _title: 'Acquia Purge Varnish'
+    _controller: '\Drupal\acquia_purge_varnish\Controller\AcquiaPurgeVarnishController::purgeVarnish'
+  options:
+    _admin_route: TRUE
+  requirements:
+    _permission: 'administer site configuration'
+    _csrf_token: 'TRUE'

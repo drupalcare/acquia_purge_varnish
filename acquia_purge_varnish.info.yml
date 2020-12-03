@@ -1,0 +1,6 @@
+name: 'Acquia Purge Varnish'
+type: module
+description: 'Allow customers on Acquia to purge varnish for the current environment'
+package: Acquia
+core: 8.x
+core_version_requirement: ^8 || ^9
