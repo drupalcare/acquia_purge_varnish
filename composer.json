@@ -1,0 +1,28 @@
+{
+  "name": "drupal/acquia_purge_varnish",
+  "description": "Allow customers on Acquia to purge varnish for the current environment.",
+  "type": "drupal-module",
+  "homepage": "https://drupal.org/project/acquia_purge_varnish",
+  "authors": [
+    {
+      "name": "Alaa Haddad (alaahaddad.com)",
+      "homepage": "https://www.drupal.org/u/flashwebcenter",
+      "role": "Maintainer"
+    }
+  ],
+  "support": {
+    "issues": "https://drupal.org/project/issues/acquia_purge_varnish",
+    "source": "https://cgit.drupalcode.org/acquia_purge_varnish"
+  },
+  "license": "GPL-2.0+",
+  "minimum-stability": "dev",
+  "require": {
+    "php": ">=7.3.0",
+    "drupal/core": "^8.7||^9.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "Drupal\\acquia_purge_varnish\\": "src/"
+    }
+  }
+}

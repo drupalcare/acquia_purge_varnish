@@ -72,7 +72,7 @@ class AcquiaPurgeVarnishForm extends ConfigFormBase {
    * @param array $form
    *   Form array.
    * @param \Drupal\Core\Form\FormStateInterface $form_state
-   *   Form State interface.
+   *   Form state object.
    *
    * @return array
    *   Return array.
