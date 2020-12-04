@@ -1,4 +1,3 @@
-
 # INTRODUCTION
 Clear varnish on Acquia from drupal site. Uses Guzzle HTTP client Instead of
 cURL https://www.drupal.org/node/1862446
@@ -17,6 +16,9 @@ risk.
 # DEPENDENCIES
 None
 
+# INSTALLATION
+Install as any other contrib module.
+
 # REQUIREMENTS
 1- It only works with any acquia's environment.
 2- You must have Acquia's (API Key && API Secret) with the right permissions
@@ -34,12 +36,19 @@ credentials in settings.php and can't be changed in admin form.
 The two fields will be disabled.
 
 
-copy this code in your settings.php and add
+copy this code in your settings.php and add your (API Key & API Secret)
 $settings['acquia_purge_varnish_credentials'] = [
 'api_key' => 'insert-acquia-api-key',
 'api_secret' => 'insert-acquia-api-secret'
 ];
 
+# PERMISSIONS
+If you are an admin you can give permissions to any drupal role to clear cache.
+
+# Legal
+This module has not been built, maintained or supported by Acquia Inc.
+This is an open source project with no association with Acquia Inc.
+The module uses their API, that's all.
 
 * Read more about Acquia's API V2:
    https://cloudapi-docs.acquia.com/
