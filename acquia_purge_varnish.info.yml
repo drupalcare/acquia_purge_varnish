@@ -4,3 +4,4 @@ description: 'Allow customers on Acquia to purge varnish for the current environ
 package: Acquia
 core: 8.x
 core_version_requirement: ^8 || ^9
+configure: acquia_purge_varnish.form
