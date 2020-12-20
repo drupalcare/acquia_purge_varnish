@@ -57,5 +57,3 @@ The module uses their API, that's all.
 
 * To submit bug reports and feature suggestions, or to track changes:
    https://drupal.org/project/issues/acquia_purge_varnish
-
-

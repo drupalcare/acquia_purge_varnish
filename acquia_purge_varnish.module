@@ -38,10 +38,3 @@ function acquia_purge_varnish_help($route_name, RouteMatchInterface $route_match
 
   return NULL;
 }
-
-/**
- * Implements hook_uninstall().
- */
-function acquia_purge_varnish_uninstall() {
-  \Drupal::configFactory()->getEditable('acquia_purge_varnish_form.settings')->delete();
-}

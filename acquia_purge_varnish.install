@@ -1,0 +1,23 @@
+<?php
+
+/**
+ * @file
+ * Acquia Purge Varnish.
+ *
+ * Filename:     acquia_purge_varnish.module
+ * Website:      https://www.flashwebcenter.com
+ * Description:  .install file.
+ * Developer:    Alaa Haddad https://www.alaahaddad.com.
+ */
+
+/**
+ * Implements hook_uninstall().
+ */
+function acquia_purge_varnish_uninstall($is_syncing) {
+  if ($is_syncing) {
+    return;
+  }
+  \Drupal::configFactory()
+    ->getEditable('acquia_purge_varnish_form.settings')
+    ->delete();
+}
