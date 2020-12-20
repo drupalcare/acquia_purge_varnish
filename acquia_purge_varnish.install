@@ -4,7 +4,7 @@
  * @file
  * Acquia Purge Varnish.
  *
- * Filename:     acquia_purge_varnish.module
+ * Filename:     acquia_purge_varnish.install
  * Website:      https://www.flashwebcenter.com
  * Description:  .install file.
  * Developer:    Alaa Haddad https://www.alaahaddad.com.
