@@ -14,5 +14,17 @@
     "support": {
         "issues": "https://drupal.org/project/issues/acquia_purge_varnish",
         "source": "https://git.drupalcode.org/project/acquia_purge_varnish"
+    },
+    "repositories": [
+        {
+            "type": "composer",
+            "url": "https://packages.drupal.org/8"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Drupal\\acquia_purge_varnish\\": "src"
+        }
     }
 }
+
