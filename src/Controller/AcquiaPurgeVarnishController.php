@@ -6,6 +6,7 @@ use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Site\Settings;
 use Drupal\Core\Logger\LoggerChannelInterface;
+use Drupal\acquia_purge_varnish\Form\AcquiaPurgeVarnishForm;
 use Drupal\acquia_purge_varnish\AcquiaPurgeVarnishCredentials;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -200,7 +201,7 @@ class AcquiaPurgeVarnishController extends ControllerBase {
    */
   protected function getValueFromSettingsOrConfig(string $name) {
     $valueFromSettings = $this->getCredentials();
-    $valueFromConfig   = $this->configFactory->get('acquia_purge_varnish_form.settings');
+    $valueFromConfig   = $this->configFactory->get(AcquiaPurgeVarnishForm::SETTINGS);
     return $valueFromSettings[$name] ?: $valueFromConfig->get($name);
   }
 

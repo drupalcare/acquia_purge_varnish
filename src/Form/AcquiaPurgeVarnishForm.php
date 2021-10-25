@@ -19,7 +19,7 @@ class AcquiaPurgeVarnishForm extends ConfigFormBase {
    *
    * @var string
    */
-  public const SETTINGS = 'acquia_purge_varnish_form.settings';
+  public const SETTINGS = 'acquia_purge_varnish.settings';
   /**
    * Log activity when user enter credentials.
    *
