@@ -85,7 +85,7 @@ class AcquiaPurgeVarnishForm extends ConfigFormBase {
       '#title' => t('API Key'),
       '#size' => 60,
       '#required' => TRUE,
-      '#default_value' => $this->isOverridden('api_key') ?: $config->get('api_key'),
+      '#default_value' => $this->isOverridden('api_key') ?? $config->get('api_key'),
       '#disabled' => $this->isOverridden('api_key'),
       '#attributes' => [
         'placeholder' => [
@@ -97,7 +97,7 @@ class AcquiaPurgeVarnishForm extends ConfigFormBase {
     $form['acquia_purge_varnish_form']['api_secret'] = [
       '#type' => 'textfield',
       '#title' => t('API Secret'),
-      '#default_value' => $this->isOverridden('api_secret') ?: $config->get('api_secret'),
+      '#default_value' => $this->isOverridden('api_secret') ?? $config->get('api_secret'),
       '#size' => 60,
       '#required' => TRUE,
       '#disabled' => $this->isOverridden('api_secret'),
@@ -107,6 +107,20 @@ class AcquiaPurgeVarnishForm extends ConfigFormBase {
         ],
       ],
       '#description' => t('Enter your Acquia cloud API Secret.'),
+    ];
+    $form['acquia_purge_varnish_form']['application_name'] = [
+      '#type' => 'textfield',
+      '#title' => t('Application Name'),
+      '#size' => 60,
+      '#required' => FALSE,
+      '#default_value' => $this->isOverridden('application_name') ?? $config->get('application_name'),
+      '#disabled' => $this->isOverridden('application_name'),
+      '#attributes' => [
+        'placeholder' => [
+          'Acquia Application Name',
+        ],
+      ],
+      '#description' => t('Enter your Acquia cloud Application Name if you know it. https://docs.acquia.com/cloud-platform/manage/'),
     ];
     return parent::buildForm($form, $form_state);
 
@@ -120,6 +134,7 @@ class AcquiaPurgeVarnishForm extends ConfigFormBase {
     $this->config(self::SETTINGS)
       ->set('api_key', $form_state->getValue('api_key'))
       ->set('api_secret', $form_state->getValue('api_secret'))
+      ->set('application_name', $form_state->getValue('application_name'))
       ->save();
     parent::submitForm($form, $form_state);
 

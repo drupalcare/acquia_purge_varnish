@@ -35,11 +35,12 @@ I added an extra feature for developers/site admin who like to add Acquia's
 credentials in settings.php and can't be changed in admin form.
 The two fields will be disabled.
 
-
-copy this code in your settings.php and add your (API Key & API Secret)
+copy this code in your settings.php and add your (API Key, API Secret and Acquia
+ Application Name)
 $settings['acquia_purge_varnish_credentials'] = [
-'api_key' => 'insert-acquia-api-key',
-'api_secret' => 'insert-acquia-api-secret'
+   'api_key' => 'insert-acquia-api-key',
+   'api_secret' => 'insert-acquia-api-secret',
+   'application_name' => 'insert-acquia-application-name'
 ];
 
 # PERMISSIONS

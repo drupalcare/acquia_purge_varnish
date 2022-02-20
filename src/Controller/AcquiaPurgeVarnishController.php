@@ -135,33 +135,40 @@ class AcquiaPurgeVarnishController extends ControllerBase {
       $currentDomain = $_ENV['HTTP_HOST'];
       $apiKey = $this->getValueFromSettingsOrConfig('api_key');
       $apiSecret = $this->getValueFromSettingsOrConfig('api_secret');
+      $applicationName = $this->getValueFromSettingsOrConfig('application_name') ?? $_ENV['AH_SITE_GROUP'];
 
-      if ($apiKey != NULL && $apiSecret != NULL) {
+      if (!empty($apiKey) && !empty($apiSecret) && !empty($applicationName)) {
         $getAppUrl = "https://cloud.acquia.com/api/applications";
         $getCredentials = [$apiKey, $apiSecret];
 
         // Get the application UUID, make a request to GET /api/applications.
         $getAppUuid = AcquiaPurgeVarnishCredentials::getResponse('GET', $getAppUrl, $getCredentials);
-        $myAppUuid = $getAppUuid["_embedded"]["items"][0]["uuid"];
-        // Make a request to GET /api/applications/[uuid]/environments.
-        $getEnvsUrl = "https://cloud.acquia.com/api/applications/{$myAppUuid}/environments";
-
-        $myEnvs = AcquiaPurgeVarnishCredentials::getResponse('GET', $getEnvsUrl, $getCredentials);
-        // Count how many environment you have.
-        $myEnvCount = count($myEnvs["_embedded"]["items"]);
-        // Store each environment UUID plus the domains.  Each environment will
-        // have one unique uuid and one or more domains.
-        $myEnvsIdsDomains = $myEnvs["_embedded"]["items"];
-        // Loop in $myEnvsIdsDomains to store the uuid and domains.
-        // Last function will be called only if we find a domain.
-        $clearVarnishApi = $this->getUuidAndDomains($myEnvsIdsDomains, $myEnvCount, $currentDomain);
-        if ($clearVarnishApi !== '') {
-          // Message from varnish.
-          $output = AcquiaPurgeVarnishCredentials::getResponse('POST', $clearVarnishApi, $getCredentials);
-          $this->messenger()->addMessage($this->t('@message', ['@message' => $output['message']]));
-          $this->logger->info($output['message']);
+        foreach ($getAppUuid["_embedded"]["items"] as $getAppUuid_item_key => $getAppUuid_item) {
+          if (isset($getAppUuid_item['name']) && strtolower($getAppUuid_item['name']) == strtolower($applicationName)) {
+            $myAppUuid = $getAppUuid_item["uuid"];
+          }
         }
-        unset($clearVarnishApi);
+        if (!empty($myAppUuid)) {
+          // Make a request to GET /api/applications/[uuid]/environments.
+          $getEnvsUrl = "https://cloud.acquia.com/api/applications/{$myAppUuid}/environments";
+
+          $myEnvs = AcquiaPurgeVarnishCredentials::getResponse('GET', $getEnvsUrl, $getCredentials);
+          // Count how many environment you have.
+          $myEnvCount = count($myEnvs["_embedded"]["items"]);
+          // Store each environment UUID plus the domains. Each environment will
+          // have one unique uuid and one or more domains.
+          $myEnvsIdsDomains = $myEnvs["_embedded"]["items"];
+          // Loop in $myEnvsIdsDomains to store the uuid and domains.
+          // Last function will be called only if we find a domain.
+          $clearVarnishApi = $this->getUuidAndDomains($myEnvsIdsDomains, $myEnvCount, $currentDomain);
+          if ($clearVarnishApi !== '') {
+            // Message from varnish.
+            $output = AcquiaPurgeVarnishCredentials::getResponse('POST', $clearVarnishApi, $getCredentials);
+            $this->messenger()->addMessage($this->t('@message', ['@message' => $output['message']]));
+            $this->logger->info($output['message']);
+          }
+          unset($clearVarnishApi);
+        }
       }
       else {
         $this->messenger()->addError($this->t('Please insert Acquia credentials.'));
@@ -202,7 +209,8 @@ class AcquiaPurgeVarnishController extends ControllerBase {
   protected function getValueFromSettingsOrConfig(string $name) {
     $valueFromSettings = $this->getCredentials();
     $valueFromConfig   = $this->configFactory->get(AcquiaPurgeVarnishForm::SETTINGS);
-    return $valueFromSettings[$name] ?: $valueFromConfig->get($name);
+    // Null Coalescing Operator.
+    return $valueFromSettings[$name] ?? $valueFromConfig->get($name);
   }
 
 }

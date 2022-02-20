@@ -1,3 +1,10 @@
+acquia_purge_varnish.admin:
+  path: '/admin/config/acquia-purge'
+  defaults:
+    _controller: '\Drupal\system\Controller\SystemController::systemAdminMenuBlockPage'
+    _title: 'Acquia Purge Varnish'
+  requirements:
+    _permission: 'Acquia Purge Varnish'
 acquia_purge_varnish.form:
   path: '/admin/config/acquia-purge-varnish-form'
   defaults:

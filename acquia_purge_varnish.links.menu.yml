@@ -1,8 +1,12 @@
+acquia_purge_varnish.admin:
+  title: 'Acquia Purge Varnish'
+  route_name: acquia_purge_varnish.admin
+  parent: system.admin_config
 acquia_purge_varnish.form:
   route_name: acquia_purge_varnish.form
-  parent: system.admin_config
-  title: 'Acquia purge varnish form'
+  title: 'Credentials form'
+  parent: acquia_purge_varnish.admin
 acquia_purge_varnish.cache:
   route_name: acquia_purge_varnish.cache
   title: 'Purge varnish'
-  parent: acquia_purge_varnish.form
+  parent: acquia_purge_varnish.admin
