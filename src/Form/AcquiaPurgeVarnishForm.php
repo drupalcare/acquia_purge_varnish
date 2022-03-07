@@ -80,48 +80,75 @@ class AcquiaPurgeVarnishForm extends ConfigFormBase {
   public function buildForm(array $form, FormStateInterface $form_state): array {
     $config = $this->config(static::SETTINGS);
 
-    $form['acquia_purge_varnish_form']['api_key'] = [
-      '#type' => 'textfield',
-      '#title' => t('API Key'),
-      '#size' => 60,
-      '#required' => TRUE,
-      '#default_value' => $this->isOverridden('api_key') ?? $config->get('api_key'),
-      '#disabled' => $this->isOverridden('api_key'),
-      '#attributes' => [
-        'placeholder' => [
-          'API Key',
+    if (!$this->isOverridden('api_key')) {
+      $form['acquia_purge_varnish_form']['api_key'] = [
+        '#type' => 'textfield',
+        '#title' => t('API Key'),
+        '#size' => 60,
+        '#required' => TRUE,
+        '#default_value' => $config->get('api_key'),
+        '#attributes' => [
+          'placeholder' => [
+            'API Key',
+          ],
         ],
-      ],
-      '#description' => t('Enter your Acquia cloud API Key.'),
-    ];
-    $form['acquia_purge_varnish_form']['api_secret'] = [
-      '#type' => 'textfield',
-      '#title' => t('API Secret'),
-      '#default_value' => $this->isOverridden('api_secret') ?? $config->get('api_secret'),
-      '#size' => 60,
-      '#required' => TRUE,
-      '#disabled' => $this->isOverridden('api_secret'),
-      '#attributes' => [
-        'placeholder' => [
-          'API Secret',
+        '#description' => t('Enter your Acquia cloud API Key.'),
+      ];
+    }
+    else {
+      $form['acquia_purge_varnish_form']['api_key'] = [
+        '#type' => 'item',
+        '#title' => t('API Key'),
+        '#markup' => t('API Key is currently being overriden in <em>settings.php</em>.'),
+      ];
+    }
+
+    if (!$this->isOverridden('api_secret')) {
+      $form['acquia_purge_varnish_form']['api_secret'] = [
+        '#type' => 'textfield',
+        '#title' => t('API Secret'),
+        '#default_value' => $config->get('api_secret'),
+        '#size' => 60,
+        '#required' => TRUE,
+        '#attributes' => [
+          'placeholder' => [
+            'API Secret',
+          ],
         ],
-      ],
-      '#description' => t('Enter your Acquia cloud API Secret.'),
-    ];
-    $form['acquia_purge_varnish_form']['application_name'] = [
-      '#type' => 'textfield',
-      '#title' => t('Application Name'),
-      '#size' => 60,
-      '#required' => FALSE,
-      '#default_value' => $this->isOverridden('application_name') ?? $config->get('application_name'),
-      '#disabled' => $this->isOverridden('application_name'),
-      '#attributes' => [
-        'placeholder' => [
-          'Acquia Application Name',
+        '#description' => t('Enter your Acquia cloud API Secret.'),
+      ];
+    }
+    else {
+      $form['acquia_purge_varnish_form']['api_secret'] = [
+        '#type' => 'item',
+        '#title' => t('API Secret'),
+        '#markup' => t('API Secret is currently being overriden in <em>settings.php</em>.'),
+      ];
+    }
+
+    if (!$this->isOverridden('application_name')) {
+      $form['acquia_purge_varnish_form']['application_name'] = [
+        '#type' => 'textfield',
+        '#title' => t('Application Name'),
+        '#size' => 60,
+        '#required' => FALSE,
+        '#default_value' => $config->get('application_name'),
+        '#attributes' => [
+          'placeholder' => [
+            'Acquia Application Name',
+          ],
         ],
-      ],
-      '#description' => t('Enter your Acquia cloud Application Name if you know it. https://docs.acquia.com/cloud-platform/manage/'),
-    ];
+        '#description' => t('Enter your Acquia cloud Application Name if you know it. https://docs.acquia.com/cloud-platform/manage/'),
+      ];
+    }
+    else {
+      $form['acquia_purge_varnish_form']['application_name'] = [
+        '#type' => 'item',
+        '#title' => t('Application Name'),
+        '#markup' => t('Application Name is currently being overriden in <em>settings.php</em>.'),
+      ];
+    }
+
     return parent::buildForm($form, $form_state);
 
   }
