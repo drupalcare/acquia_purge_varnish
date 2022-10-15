@@ -83,7 +83,7 @@ class AcquiaPurgeVarnishForm extends ConfigFormBase {
     if (!$this->isOverridden('api_key')) {
       $form['acquia_purge_varnish_form']['api_key'] = [
         '#type' => 'textfield',
-        '#title' => t('API Key'),
+        '#title' => $this->t('API Key'),
         '#size' => 60,
         '#required' => TRUE,
         '#default_value' => $config->get('api_key'),
@@ -92,21 +92,21 @@ class AcquiaPurgeVarnishForm extends ConfigFormBase {
             'API Key',
           ],
         ],
-        '#description' => t('Enter your Acquia cloud API Key.'),
+        '#description' => $this->t('Enter your Acquia cloud API Key.'),
       ];
     }
     else {
       $form['acquia_purge_varnish_form']['api_key'] = [
         '#type' => 'item',
-        '#title' => t('API Key'),
-        '#markup' => t('API Key is currently being overriden in <em>settings.php</em>.'),
+        '#title' => $this->t('API Key'),
+        '#markup' => $this->t('API Key is currently being overriden in <em>settings.php</em>.'),
       ];
     }
 
     if (!$this->isOverridden('api_secret')) {
       $form['acquia_purge_varnish_form']['api_secret'] = [
         '#type' => 'textfield',
-        '#title' => t('API Secret'),
+        '#title' => $this->t('API Secret'),
         '#default_value' => $config->get('api_secret'),
         '#size' => 60,
         '#required' => TRUE,
@@ -115,21 +115,21 @@ class AcquiaPurgeVarnishForm extends ConfigFormBase {
             'API Secret',
           ],
         ],
-        '#description' => t('Enter your Acquia cloud API Secret.'),
+        '#description' => $this->t('Enter your Acquia cloud API Secret.'),
       ];
     }
     else {
       $form['acquia_purge_varnish_form']['api_secret'] = [
         '#type' => 'item',
-        '#title' => t('API Secret'),
-        '#markup' => t('API Secret is currently being overriden in <em>settings.php</em>.'),
+        '#title' => $this->t('API Secret'),
+        '#markup' => $this->t('API Secret is currently being overriden in <em>settings.php</em>.'),
       ];
     }
 
     if (!$this->isOverridden('application_name')) {
       $form['acquia_purge_varnish_form']['application_name'] = [
         '#type' => 'textfield',
-        '#title' => t('Application Name'),
+        '#title' => $this->t('Application Name'),
         '#size' => 60,
         '#required' => FALSE,
         '#default_value' => $config->get('application_name'),
@@ -138,14 +138,14 @@ class AcquiaPurgeVarnishForm extends ConfigFormBase {
             'Acquia Application Name',
           ],
         ],
-        '#description' => t('Enter your Acquia cloud Application Name if you know it. https://docs.acquia.com/cloud-platform/manage/'),
+        '#description' => $this->t('Enter your Acquia cloud Application Name if you know it. https://docs.acquia.com/cloud-platform/manage/'),
       ];
     }
     else {
       $form['acquia_purge_varnish_form']['application_name'] = [
         '#type' => 'item',
-        '#title' => t('Application Name'),
-        '#markup' => t('Application Name is currently being overriden in <em>settings.php</em>.'),
+        '#title' => $this->t('Application Name'),
+        '#markup' => $this->t('Application Name is currently being overriden in <em>settings.php</em>.'),
       ];
     }
 

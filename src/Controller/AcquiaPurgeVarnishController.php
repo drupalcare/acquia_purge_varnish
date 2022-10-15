@@ -10,6 +10,7 @@ use Drupal\acquia_purge_varnish\Form\AcquiaPurgeVarnishForm;
 use Drupal\acquia_purge_varnish\AcquiaPurgeVarnishCredentials;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
  * Returns responses for acquia_purge_varnish module routes.
@@ -37,16 +38,28 @@ class AcquiaPurgeVarnishController extends ControllerBase {
   protected $logger;
 
   /**
+   * A request stack symfony instance.
+   *
+   * @var \Symfony\Component\HttpFoundation\RequestStack
+   */
+  protected $requestStack;
+
+  /**
    * Get the config and logger.
    *
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
    *   Config Factory.
    * @param \Drupal\Core\Logger\LoggerChannelInterface $logger
    *   Drupal Logger.
+   * @param \Symfony\Component\HttpFoundation\RequestStack $request_stack
+   *   A request stack symfony instance.
    */
-  public function __construct(ConfigFactoryInterface $config_factory, LoggerChannelInterface $logger) {
+  public function __construct(ConfigFactoryInterface $config_factory,
+                              LoggerChannelInterface $logger,
+                              RequestStack $request_stack) {
     $this->configFactory = $config_factory;
     $this->logger = $logger;
+    $this->requestStack = $request_stack;
     $this->getCredentials();
   }
 
@@ -56,7 +69,8 @@ class AcquiaPurgeVarnishController extends ControllerBase {
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('config.factory'),
-      $container->get('acquia_purge_varnish.logger.channel.acquia_purge_varnish')
+      $container->get('acquia_purge_varnish.logger.channel.acquia_purge_varnish'),
+      $container->get('request_stack'),
     );
   }
 
@@ -64,8 +78,13 @@ class AcquiaPurgeVarnishController extends ControllerBase {
    * Stay on the same page.
    */
   public function getCurrentUrl() {
-    $request = \Drupal::request();
-    return $request->server->get('HTTP_REFERER');
+    $request = $this->requestStack->getCurrentRequest();
+    if ($request->server->get('HTTP_REFERER')) {
+      return $request->server->get('HTTP_REFERER');
+    }
+    else {
+      return base_path();
+    }
   }
 
   /**
@@ -143,7 +162,7 @@ class AcquiaPurgeVarnishController extends ControllerBase {
 
         // Get the application UUID, make a request to GET /api/applications.
         $getAppUuid = AcquiaPurgeVarnishCredentials::getResponse('GET', $getAppUrl, $getCredentials);
-        foreach ($getAppUuid["_embedded"]["items"] as $getAppUuid_item_key => $getAppUuid_item) {
+        foreach ($getAppUuid["_embedded"]["items"] as $getAppUuid_item) {
           if (isset($getAppUuid_item['name']) && strtolower($getAppUuid_item['name']) == strtolower($applicationName)) {
             $myAppUuid = $getAppUuid_item["uuid"];
           }
