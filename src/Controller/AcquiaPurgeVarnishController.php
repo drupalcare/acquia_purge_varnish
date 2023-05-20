@@ -2,6 +2,7 @@
 
 namespace Drupal\acquia_purge_varnish\Controller;
 
+use Drupal\Component\Serialization\Json;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Site\Settings;
@@ -35,7 +36,7 @@ class AcquiaPurgeVarnishController extends ControllerBase {
    *
    * @var \Drupal\Core\Logger\LoggerChannelInterface
    */
-  protected $logger;
+  protected LoggerChannelInterface $logger;
 
   /**
    * A request stack symfony instance.
@@ -54,9 +55,7 @@ class AcquiaPurgeVarnishController extends ControllerBase {
    * @param \Symfony\Component\HttpFoundation\RequestStack $request_stack
    *   A request stack symfony instance.
    */
-  public function __construct(ConfigFactoryInterface $config_factory,
-                              LoggerChannelInterface $logger,
-                              RequestStack $request_stack) {
+  public function __construct(ConfigFactoryInterface $config_factory, LoggerChannelInterface $logger, RequestStack $request_stack) {
     $this->configFactory = $config_factory;
     $this->logger = $logger;
     $this->requestStack = $request_stack;
@@ -70,7 +69,7 @@ class AcquiaPurgeVarnishController extends ControllerBase {
     return new static(
       $container->get('config.factory'),
       $container->get('acquia_purge_varnish.logger.channel.acquia_purge_varnish'),
-      $container->get('request_stack'),
+      $container->get('request_stack')
     );
   }
 
@@ -111,30 +110,42 @@ class AcquiaPurgeVarnishController extends ControllerBase {
    * @param string $currentDomain
    *   Look for current environment domain.
    *
-   * @return null|string
-   *   Check if the domain exist in acquia.
+   * @return array
+   *   Return array with Url and Form Params.
    */
   private function getUuidAndDomains(array $myEnvsIdsDomains, int $myEnvCount, string $currentDomain) {
+    $domain = $this->getValueFromSettingsOrConfig('domain');
     $envIdsDos = [];
     for ($i = 0; $i < $myEnvCount; $i++) {
       foreach ($myEnvsIdsDomains[$i] as $key => $myEnvIdDomain) {
         if ($key === "id") {
           $environmentId = $myEnvIdDomain;
-          $envIdsDos[$i] = ['id' => $environmentId];
+          $envIdsDos[$i]['id'] = $environmentId;
+        }
+        if ($key === "name") {
+          $environmentName = $myEnvIdDomain;
+          $envIdsDos[$i]['name'] = $environmentName;
         }
         elseif ($key === "domains") {
-          $domains = implode(' | ', $myEnvIdDomain);
-          $envIdsDos[$i] += ["domains" => $domains];
-          // One of Acquia's domain.
-          if (preg_match("/{$currentDomain}/i", $domains)) {
-            return "https://cloud.acquia.com/api/environments/" . $envIdsDos[$i]['id'] . "/domains/{$currentDomain}/actions/clear-varnish";
+          // One of Acquia's current environment domain.
+          if (in_array($currentDomain, $myEnvIdDomain)) {
+            if ($domain === 'current') {
+              return ["https://cloud.acquia.com/api/environments/" . $envIdsDos[$i]['id'] . "/domains/{$currentDomain}/actions/clear-caches", []];
+            }
+            if ($domain === 'all') {
+              return ["https://cloud.acquia.com/api/environments/" . $envIdsDos[$i]['id'] . "/actions/clear-caches", [
+                'json' => [
+                  'domains' => $myEnvIdDomain,
+                ],
+              ],
+              ];
+            }
           }
         }
       }
-      continue;
     }
     unset($envIdsDos);
-    return '';
+    return ['', []];
   }
 
   /**
@@ -151,6 +162,7 @@ class AcquiaPurgeVarnishController extends ControllerBase {
     // {domain}/actions/clear-varnish To clear varnish caches.
     // before anything we check if the module on Acquia.
     if (isset($_ENV['AH_SITE_ENVIRONMENT'])) {
+      $log_requests = $this->getValueFromSettingsOrConfig('log_requests');
       $currentDomain = $_ENV['HTTP_HOST'];
       $apiKey = $this->getValueFromSettingsOrConfig('api_key');
       $apiSecret = $this->getValueFromSettingsOrConfig('api_secret');
@@ -162,7 +174,16 @@ class AcquiaPurgeVarnishController extends ControllerBase {
 
         // Get the application UUID, make a request to GET /api/applications.
         $getAppUuid = AcquiaPurgeVarnishCredentials::getResponse('GET', $getAppUrl, $getCredentials);
-        foreach ($getAppUuid["_embedded"]["items"] as $getAppUuid_item) {
+        if ($log_requests) {
+          $this->logger->info($this->t(
+            'URL: @url :: Response: @response',
+            [
+              '@url' => $getAppUrl,
+              '@response' => Json::encode($getAppUuid),
+            ]
+          ));
+        }
+        foreach ($getAppUuid["_embedded"]["items"] as $getAppUuid_item_key => $getAppUuid_item) {
           if (isset($getAppUuid_item['name']) && strtolower($getAppUuid_item['name']) == strtolower($applicationName)) {
             $myAppUuid = $getAppUuid_item["uuid"];
           }
@@ -172,6 +193,15 @@ class AcquiaPurgeVarnishController extends ControllerBase {
           $getEnvsUrl = "https://cloud.acquia.com/api/applications/{$myAppUuid}/environments";
 
           $myEnvs = AcquiaPurgeVarnishCredentials::getResponse('GET', $getEnvsUrl, $getCredentials);
+          if ($log_requests) {
+            $this->logger->info($this->t(
+              'URL: @url :: Response: @response',
+              [
+                '@url' => $getEnvsUrl,
+                '@response' => Json::encode($myEnvs),
+              ]
+            ));
+          }
           // Count how many environment you have.
           $myEnvCount = count($myEnvs["_embedded"]["items"]);
           // Store each environment UUID plus the domains. Each environment will
@@ -179,10 +209,20 @@ class AcquiaPurgeVarnishController extends ControllerBase {
           $myEnvsIdsDomains = $myEnvs["_embedded"]["items"];
           // Loop in $myEnvsIdsDomains to store the uuid and domains.
           // Last function will be called only if we find a domain.
-          $clearVarnishApi = $this->getUuidAndDomains($myEnvsIdsDomains, $myEnvCount, $currentDomain);
+          [$clearVarnishApi, $options] = $this->getUuidAndDomains($myEnvsIdsDomains, $myEnvCount, $currentDomain);
           if ($clearVarnishApi !== '') {
             // Message from varnish.
-            $output = AcquiaPurgeVarnishCredentials::getResponse('POST', $clearVarnishApi, $getCredentials);
+            $output = AcquiaPurgeVarnishCredentials::getResponse('POST', $clearVarnishApi, $getCredentials, $options);
+            if ($log_requests) {
+              $this->logger->info($this->t(
+                'URL: @url :: Body: @body :: Response: @response',
+                [
+                  '@url' => $clearVarnishApi,
+                  '@body' => Json::encode($options),
+                  '@response' => Json::encode($output),
+                ]
+              ));
+            }
             $this->messenger()->addMessage($this->t('@message', ['@message' => $output['message']]));
             $this->logger->info($output['message']);
           }

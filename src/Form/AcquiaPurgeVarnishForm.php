@@ -149,6 +149,32 @@ class AcquiaPurgeVarnishForm extends ConfigFormBase {
       ];
     }
 
+    $environment = $_ENV['AH_SITE_ENVIRONMENT'] ?? 'dev';
+
+    $form['acquia_purge_varnish_form']['domain'] = [
+      '#type' => 'radios',
+      '#title' => $this->t('Which domain(s) from @env should be purged?', [
+        '@env' => $environment,
+      ]),
+      '#description' => $this->t(
+        'All domains will purge all domains,
+        current domain will only purge the domain the user is currently on. </br>
+        <strong>NOTE:</strong> If you are using a Different domains to Admin Area and Public Website, you should use the "All domains" option. </br>
+        <strong>NOTE:</strong> Check the domains on your Acquia Cloud Domain Management.'
+      ),
+      '#options' => [
+        'all' => $this->t('All domains'),
+        'current' => $this->t('Current domain only'),
+      ],
+      '#default_value' => $config->get('domain') ?? 'current',
+    ];
+
+    $form['acquia_purge_varnish_form']['log_requests'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Log requests?'),
+      '#default_value' => $config->get('log_requests') ?? FALSE,
+    ];
+
     return parent::buildForm($form, $form_state);
 
   }
@@ -162,6 +188,8 @@ class AcquiaPurgeVarnishForm extends ConfigFormBase {
       ->set('api_key', $form_state->getValue('api_key'))
       ->set('api_secret', $form_state->getValue('api_secret'))
       ->set('application_name', $form_state->getValue('application_name'))
+      ->set('log_requests', $form_state->getValue('log_requests'))
+      ->set('domain', $form_state->getValue('domain'))
       ->save();
     parent::submitForm($form, $form_state);
 

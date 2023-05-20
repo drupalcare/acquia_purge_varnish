@@ -19,13 +19,15 @@ class AcquiaPurgeVarnishCredentials {
    *   Site Url.
    * @param array $credentials
    *   Get stored credentials.
+   * @param array $options
+   *   Options array, usually to send body/json on request.
    *
    * @return mixed
    *   Return data after authentication.
    *
    * @throws \GuzzleHttp\Exception\GuzzleException
    */
-  public static function getResponse(string $method, string $url, array $credentials) {
+  public static function getResponse(string $method, string $url, array $credentials, array $options = []) {
 
     $provider = new GenericProvider([
       'clientId' => $credentials[0],
@@ -41,11 +43,9 @@ class AcquiaPurgeVarnishCredentials {
 
       // Generate a request object using the access token.
       $request = $provider->getAuthenticatedRequest($method, $url, $accessToken);
-      // https://cloud.acquia.com/api/applications
       // Send the request.
       $client = \Drupal::httpClient();
-      // $client = new Client();
-      $response = $client->send($request);
+      $response = $client->send($request, $options);
       $data = $response->getBody();
       $data = json_decode($data, TRUE);
       return $data;
