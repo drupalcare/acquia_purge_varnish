@@ -2,13 +2,13 @@
 
 namespace Drupal\acquia_purge_varnish\Controller;
 
+use Drupal\acquia_purge_varnish\AcquiaPurgeVarnishCredentials;
+use Drupal\acquia_purge_varnish\Form\AcquiaPurgeVarnishForm;
 use Drupal\Component\Serialization\Json;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Controller\ControllerBase;
-use Drupal\Core\Site\Settings;
 use Drupal\Core\Logger\LoggerChannelInterface;
-use Drupal\acquia_purge_varnish\Form\AcquiaPurgeVarnishForm;
-use Drupal\acquia_purge_varnish\AcquiaPurgeVarnishCredentials;
+use Drupal\Core\Site\Settings;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -113,7 +113,7 @@ class AcquiaPurgeVarnishController extends ControllerBase {
    * @return array
    *   Return array with Url and Form Params.
    */
-  private function getUuidAndDomains(array $myEnvsIdsDomains, int $myEnvCount, string $currentDomain) {
+  private function getUuidAndDomains(array $myEnvsIdsDomains, int $myEnvCount, string $currentDomain): array {
     $domain = $this->getValueFromSettingsOrConfig('domain');
     $envIdsDos = [];
     for ($i = 0; $i < $myEnvCount; $i++) {
@@ -130,14 +130,17 @@ class AcquiaPurgeVarnishController extends ControllerBase {
           // One of Acquia's current environment domain.
           if (in_array($currentDomain, $myEnvIdDomain)) {
             if ($domain === 'current') {
-              return ["https://cloud.acquia.com/api/environments/" . $envIdsDos[$i]['id'] . "/domains/{$currentDomain}/actions/clear-caches", []];
+              return ["https://cloud.acquia.com/api/environments/" .
+                $envIdsDos[$i]['id'] . "/domains/{$currentDomain}/actions/clear-caches", [],
+              ];
             }
             if ($domain === 'all') {
-              return ["https://cloud.acquia.com/api/environments/" . $envIdsDos[$i]['id'] . "/actions/clear-caches", [
-                'json' => [
-                  'domains' => $myEnvIdDomain,
+              return ["https://cloud.acquia.com/api/environments/" .
+                $envIdsDos[$i]['id'] . "/actions/clear-caches", [
+                  'json' => [
+                    'domains' => $myEnvIdDomain,
+                  ],
                 ],
-              ],
               ];
             }
           }
