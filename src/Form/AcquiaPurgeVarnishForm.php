@@ -25,7 +25,7 @@ class AcquiaPurgeVarnishForm extends ConfigFormBase {
    *
    * @var \Drupal\Core\Logger\LoggerChannelInterface
    */
-  protected $logger;
+  protected LoggerChannelInterface $logger;
 
   /**
    * ClearVarnishForm constructor.
@@ -99,7 +99,7 @@ class AcquiaPurgeVarnishForm extends ConfigFormBase {
       $form['acquia_purge_varnish_form']['api_key'] = [
         '#type' => 'item',
         '#title' => $this->t('API Key'),
-        '#markup' => $this->t('API Key is currently being overriden in <em>settings.php</em>.'),
+        '#markup' => $this->t('API Key is currently being overridden in <em>settings.php</em>.'),
       ];
     }
 
@@ -122,7 +122,7 @@ class AcquiaPurgeVarnishForm extends ConfigFormBase {
       $form['acquia_purge_varnish_form']['api_secret'] = [
         '#type' => 'item',
         '#title' => $this->t('API Secret'),
-        '#markup' => $this->t('API Secret is currently being overriden in <em>settings.php</em>.'),
+        '#markup' => $this->t('API Secret is currently being overridden in <em>settings.php</em>.'),
       ];
     }
 
@@ -145,7 +145,7 @@ class AcquiaPurgeVarnishForm extends ConfigFormBase {
       $form['acquia_purge_varnish_form']['application_name'] = [
         '#type' => 'item',
         '#title' => $this->t('Application Name'),
-        '#markup' => $this->t('Application Name is currently being overriden in <em>settings.php</em>.'),
+        '#markup' => $this->t('Application Name is currently being overridden in <em>settings.php</em>.'),
       ];
     }
 

@@ -2,6 +2,7 @@
 
 namespace Drupal\acquia_purge_varnish;
 
+use Drupal\Core\Utility\Error;
 use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
 use League\OAuth2\Client\Provider\GenericProvider;
 
@@ -53,7 +54,10 @@ class AcquiaPurgeVarnishCredentials {
     }
     catch (IdentityProviderException $e) {
       // Failed to get the access token.
-      watchdog_exception('acquia_purge_varnish', $e);
+      // watchdog_exception('acquia_purge_varnish', $e);
+      // https://www.drupal.org/node/2932520
+      $logger = \Drupal::logger('acquia_purge_varnish');
+      Error::logException($logger, $e);
     }
 
   }
