@@ -204,7 +204,7 @@ class AcquiaPurgeVarnishForm extends ConfigFormBase {
    * @return mixed
    *   Return the value
    */
-  protected function isOverridden(string $name) {
+  protected function isOverridden(string $name): mixed {
     $acquiaCredentials = Settings::get('acquia_purge_varnish_credentials');
     if (!empty($acquiaCredentials[$name])) {
       return $acquiaCredentials[$name];

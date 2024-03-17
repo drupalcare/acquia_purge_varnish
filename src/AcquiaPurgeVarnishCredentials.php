@@ -53,9 +53,6 @@ class AcquiaPurgeVarnishCredentials {
 
     }
     catch (IdentityProviderException $e) {
-      // Failed to get the access token.
-      // watchdog_exception('acquia_purge_varnish', $e);
-      // https://www.drupal.org/node/2932520
       $logger = \Drupal::logger('acquia_purge_varnish');
       Error::logException($logger, $e);
     }
