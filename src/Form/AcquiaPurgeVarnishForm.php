@@ -3,6 +3,7 @@
 namespace Drupal\acquia_purge_varnish\Form;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\Config\TypedConfigManagerInterface;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Logger\LoggerChannelInterface;
@@ -35,8 +36,8 @@ class AcquiaPurgeVarnishForm extends ConfigFormBase {
    * @param \Drupal\Core\Logger\LoggerChannelInterface $logger
    *   The logger.
    */
-  public function __construct(ConfigFactoryInterface $config_factory, LoggerChannelInterface $logger) {
-    parent::__construct($config_factory);
+  public function __construct(ConfigFactoryInterface $config_factory, TypedConfigManagerInterface $typed_config_manager, LoggerChannelInterface $logger) {
+    parent::__construct($config_factory, $typed_config_manager);
     $this->logger = $logger;
   }
 
@@ -46,6 +47,7 @@ class AcquiaPurgeVarnishForm extends ConfigFormBase {
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('config.factory'),
+      $container->get('config.typed'),
       $container->get('acquia_purge_varnish.logger.channel.acquia_purge_varnish')
     );
   }
