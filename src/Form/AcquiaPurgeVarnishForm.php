@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\acquia_purge_varnish\Form;
 
+use Drupal\acquia_purge_varnish\AcquiaPurgeVarnishApiClient;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Config\TypedConfigManagerInterface;
 use Drupal\Core\Form\ConfigFormBase;
@@ -11,44 +14,45 @@ use Drupal\Core\Site\Settings;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * Default ConfigFormBase for the acquia_purge_varnish module.
+ * Configuration form for Acquia Purge Varnish settings.
  */
 class AcquiaPurgeVarnishForm extends ConfigFormBase {
 
   /**
    * Config settings.
-   *
-   * @var string
    */
   public const SETTINGS = 'acquia_purge_varnish.settings';
-  /**
-   * Log activity when user enter credentials.
-   *
-   * @var \Drupal\Core\Logger\LoggerChannelInterface
-   */
-  protected LoggerChannelInterface $logger;
 
   /**
-   * ClearVarnishForm constructor.
+   * Constructs an AcquiaPurgeVarnishForm object.
    *
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
    *   The factory for configuration objects.
+   * @param \Drupal\Core\Config\TypedConfigManagerInterface $typedConfigManager
+   *   The typed config manager.
    * @param \Drupal\Core\Logger\LoggerChannelInterface $logger
-   *   The logger.
+   *   The logger channel.
+   * @param \Drupal\acquia_purge_varnish\AcquiaPurgeVarnishApiClient $apiClient
+   *   The Acquia API client service.
    */
-  public function __construct(ConfigFactoryInterface $config_factory, TypedConfigManagerInterface $typed_config_manager, LoggerChannelInterface $logger) {
-    parent::__construct($config_factory, $typed_config_manager);
-    $this->logger = $logger;
+  public function __construct(
+    ConfigFactoryInterface $config_factory,
+    TypedConfigManagerInterface $typedConfigManager,
+    protected LoggerChannelInterface $logger,
+    protected AcquiaPurgeVarnishApiClient $apiClient,
+  ) {
+    parent::__construct($config_factory, $typedConfigManager);
   }
 
   /**
    * {@inheritdoc}
    */
-  public static function create(ContainerInterface $container) {
+  public static function create(ContainerInterface $container): static {
     return new static(
       $container->get('config.factory'),
       $container->get('config.typed'),
-      $container->get('acquia_purge_varnish.logger.channel.acquia_purge_varnish')
+      $container->get('logger.channel.acquia_purge_varnish'),
+      $container->get('acquia_purge_varnish.api_client')
     );
   }
 
@@ -69,148 +73,152 @@ class AcquiaPurgeVarnishForm extends ConfigFormBase {
   }
 
   /**
-   * Build the form.
-   *
-   * @param array $form
-   *   Form array.
-   * @param \Drupal\Core\Form\FormStateInterface $form_state
-   *   Form state object.
-   *
-   * @return array
-   *   Return array.
+   * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state): array {
     $config = $this->config(static::SETTINGS);
 
+    $form['credentials'] = [
+      '#type' => 'fieldset',
+      '#title' => $this->t('Acquia API Credentials'),
+      '#description' => $this->t('Enter your Acquia Cloud Platform API credentials. You can generate these from your <a href="@url" target="_blank">Acquia Cloud account</a>.', [
+        '@url' => 'https://cloud.acquia.com/a/profile/tokens',
+      ]),
+    ];
+
+    // API Key field.
     if (!$this->isOverridden('api_key')) {
-      $form['acquia_purge_varnish_form']['api_key'] = [
+      $form['credentials']['api_key'] = [
         '#type' => 'textfield',
         '#title' => $this->t('API Key'),
+        '#default_value' => $config->get('api_key') ?? '',
         '#size' => 60,
+        '#maxlength' => 128,
         '#required' => TRUE,
-        '#default_value' => $config->get('api_key'),
         '#attributes' => [
-          'placeholder' => [
-            'API Key',
-          ],
+          'placeholder' => $this->t('Enter your API Key'),
         ],
-        '#description' => $this->t('Enter your Acquia cloud API Key.'),
+        '#description' => $this->t('Your Acquia Cloud Platform API Key.'),
       ];
     }
     else {
-      $form['acquia_purge_varnish_form']['api_key'] = [
+      $form['credentials']['api_key'] = [
         '#type' => 'item',
         '#title' => $this->t('API Key'),
-        '#markup' => $this->t('API Key is currently being overridden in <em>settings.php</em>.'),
+        '#markup' => $this->t('API Key is currently being overridden in <code>settings.php</code>.'),
       ];
     }
 
+    // API Secret field.
     if (!$this->isOverridden('api_secret')) {
-      $form['acquia_purge_varnish_form']['api_secret'] = [
+      $form['credentials']['api_secret'] = [
         '#type' => 'textfield',
         '#title' => $this->t('API Secret'),
-        '#default_value' => $config->get('api_secret'),
+        '#default_value' => $config->get('api_secret') ?? '',
         '#size' => 60,
+        '#maxlength' => 128,
         '#required' => TRUE,
         '#attributes' => [
-          'placeholder' => [
-            'API Secret',
-          ],
+          'placeholder' => $this->t('Enter your API Secret'),
         ],
-        '#description' => $this->t('Enter your Acquia cloud API Secret.'),
+        '#description' => $this->t('Your Acquia Cloud Platform API Secret.'),
       ];
     }
     else {
-      $form['acquia_purge_varnish_form']['api_secret'] = [
+      $form['credentials']['api_secret'] = [
         '#type' => 'item',
         '#title' => $this->t('API Secret'),
-        '#markup' => $this->t('API Secret is currently being overridden in <em>settings.php</em>.'),
+        '#markup' => $this->t('API Secret is currently being overridden in <code>settings.php</code>.'),
       ];
     }
 
+    // Application Name field.
     if (!$this->isOverridden('application_name')) {
-      $form['acquia_purge_varnish_form']['application_name'] = [
+      $form['credentials']['application_name'] = [
         '#type' => 'textfield',
         '#title' => $this->t('Application Name'),
+        '#default_value' => $config->get('application_name') ?? '',
         '#size' => 60,
+        '#maxlength' => 128,
         '#required' => FALSE,
-        '#default_value' => $config->get('application_name'),
         '#attributes' => [
-          'placeholder' => [
-            'Acquia Application Name',
-          ],
+          'placeholder' => $this->t('Leave empty to auto-detect'),
         ],
-        '#description' => $this->t('Enter your Acquia cloud Application Name if you know it. https://docs.acquia.com/cloud-platform/manage/'),
+        '#description' => $this->t('Your Acquia Cloud application name. Leave empty to auto-detect from the <code>AH_SITE_GROUP</code> environment variable. See <a href="@url" target="_blank">Acquia documentation</a> for more information.', [
+          '@url' => 'https://docs.acquia.com/cloud-platform/manage/',
+        ]),
       ];
     }
     else {
-      $form['acquia_purge_varnish_form']['application_name'] = [
+      $form['credentials']['application_name'] = [
         '#type' => 'item',
         '#title' => $this->t('Application Name'),
-        '#markup' => $this->t('Application Name is currently being overridden in <em>settings.php</em>.'),
+        '#markup' => $this->t('Application Name is currently being overridden in <code>settings.php</code>.'),
       ];
     }
 
-    $environment = $_ENV['AH_SITE_ENVIRONMENT'] ?? 'dev';
+    $form['purge_settings'] = [
+      '#type' => 'fieldset',
+      '#title' => $this->t('Purge Settings'),
+    ];
 
-    $form['acquia_purge_varnish_form']['domain'] = [
+    $environment = $this->apiClient->getAcquiaEnvironment() ?? 'dev';
+
+    $form['purge_settings']['domain'] = [
       '#type' => 'radios',
       '#title' => $this->t('Which domain(s) from @env should be purged?', [
         '@env' => $environment,
       ]),
-      '#description' => $this->t(
-        'All domains will purge all domains,
-        current domain will only purge the domain the user is currently on. </br>
-        <strong>NOTE:</strong> If you are using a Different domains to Admin Area and Public Website, you should use the "All domains" option. </br>
-        <strong>NOTE:</strong> Check the domains on your Acquia Cloud Domain Management.'
-      ),
+      '#description' => $this->t('Choose whether to purge all domains or only the current domain.<br><strong>Note:</strong> If you use different domains for admin and public areas, select "All domains".<br><strong>Note:</strong> Verify domains in your Acquia Cloud Domain Management.'),
       '#options' => [
         'all' => $this->t('All domains'),
         'current' => $this->t('Current domain only'),
       ],
       '#default_value' => $config->get('domain') ?? 'current',
+      '#required' => TRUE,
     ];
 
-    $form['acquia_purge_varnish_form']['log_requests'] = [
+    $form['purge_settings']['log_requests'] = [
       '#type' => 'checkbox',
-      '#title' => $this->t('Log requests?'),
+      '#title' => $this->t('Log API requests'),
+      '#description' => $this->t('Log all API requests and responses for debugging purposes. This may generate a lot of log entries.'),
       '#default_value' => $config->get('log_requests') ?? FALSE,
     ];
 
     return parent::buildForm($form, $form_state);
-
   }
 
   /**
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state): void {
-    // Save all configs on submit.
     $this->config(self::SETTINGS)
       ->set('api_key', $form_state->getValue('api_key'))
       ->set('api_secret', $form_state->getValue('api_secret'))
       ->set('application_name', $form_state->getValue('application_name'))
-      ->set('log_requests', $form_state->getValue('log_requests'))
       ->set('domain', $form_state->getValue('domain'))
+      ->set('log_requests', (bool) $form_state->getValue('log_requests'))
       ->save();
-    parent::submitForm($form, $form_state);
 
+    parent::submitForm($form, $form_state);
   }
 
   /**
-   * Check if config variable is overridden by the settings.php.
+   * Checks if a configuration value is overridden in settings.php.
    *
    * @param string $name
-   *   Check for the field value.
+   *   The configuration key to check.
    *
    * @return mixed
-   *   Return the value
+   *   The overridden value if it exists, FALSE otherwise.
    */
   protected function isOverridden(string $name): mixed {
     $acquiaCredentials = Settings::get('acquia_purge_varnish_credentials');
+
     if (!empty($acquiaCredentials[$name])) {
       return $acquiaCredentials[$name];
     }
+
     return FALSE;
   }
 

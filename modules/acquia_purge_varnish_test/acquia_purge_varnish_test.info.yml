@@ -1,0 +1,8 @@
+name: 'Acquia Purge Varnish - Development Testing'
+type: module
+description: 'Provides mock Acquia environment and API for local testing. DO NOT enable on production.'
+core_version_requirement: ^10 || ^11
+package: 'Development'
+dependencies:
+  - acquia_purge_varnish:acquia_purge_varnish
+hidden: true

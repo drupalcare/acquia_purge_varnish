@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/10.5/phpunit.xsd"
+         bootstrap="tests/bootstrap.php"
+         colors="true"
+         beStrictAboutTestsThatDoNotTestAnything="true"
+         beStrictAboutOutputDuringTests="true"
+         failOnRisky="true"
+         failOnWarning="true"
+         cacheDirectory=".phpunit.cache"
+         displayDetailsOnIncompleteTests="true"
+         displayDetailsOnSkippedTests="true">
+  <php>
+    <!-- Set error reporting to E_ALL -->
+    <ini name="error_reporting" value="32767"/>
+    <!-- Do not limit the amount of memory tests take to run -->
+    <ini name="memory_limit" value="-1"/>
+    <!-- Prevent deprecation warnings from cluttering output -->
+    <env name="SYMFONY_DEPRECATIONS_HELPER" value="weak"/>
+  </php>
+  <testsuites>
+    <!-- Unit tests run by default (no database required) -->
+    <testsuite name="unit">
+      <directory>tests/src/Unit</directory>
+    </testsuite>
+    <!-- Kernel tests require SIMPLETEST_DB environment variable -->
+    <testsuite name="kernel">
+      <directory>tests/src/Kernel</directory>
+    </testsuite>
+  </testsuites>
+  <!-- Set default test suite to 'unit' to run without database -->
+  <coverage>
+    <report>
+      <html outputDirectory="tests/coverage"/>
+    </report>
+  </coverage>
+  <coverage includeUncoveredFiles="true"
+            pathCoverage="false"
+            ignoreDeprecatedCodeUnits="true"
+            disableCodeCoverageIgnore="true">
+    <report>
+      <html outputDirectory="tests/coverage" lowUpperBound="50" highLowerBound="90"/>
+    </report>
+  </coverage>
+  <source>
+    <include>
+      <directory suffix=".php">src</directory>
+    </include>
+    <exclude>
+      <directory>tests</directory>
+      <directory>vendor</directory>
+    </exclude>
+  </source>
+</phpunit>

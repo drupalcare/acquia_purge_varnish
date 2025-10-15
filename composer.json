@@ -1,34 +1,55 @@
 {
-    "name": "drupal/acquia_purge_varnish",
-    "description": "Allow customers on Acquia to purge varnish for the current environment.",
-    "type": "drupal-module",
-    "license": "GPL-2.0-or-later",
-    "authors": [
-        {
-            "name": "Alaa Haddad (alaahaddad.com)",
-            "homepage": "https://www.drupal.org/u/flashwebcenter",
-            "role": "Maintainer"
-        }
-    ],
-    "homepage": "https://drupal.org/project/acquia_purge_varnish",
-    "require": {
-    "drupal/core": "*",
-    "league/oauth2-client": "^2.0"
-    },
-    "support": {
-        "issues": "https://drupal.org/project/issues/acquia_purge_varnish",
-        "source": "https://git.drupalcode.org/project/acquia_purge_varnish"
-    },
-    "repositories": [
-        {
-            "type": "composer",
-            "url": "https://packages.drupal.org/8"
-        }
-    ],
-    "autoload": {
-        "psr-4": {
-            "Drupal\\acquia_purge_varnish\\": "src"
-        }
+  "name": "drupal/acquia_purge_varnish",
+  "description": "Allow customers on Acquia to purge varnish for the current environment.",
+  "type": "drupal-module",
+  "license": "GPL-2.0-or-later",
+  "authors": [
+    {
+      "name": "Alaa Haddad (alaahaddad.com)",
+      "homepage": "https://www.drupal.org/u/flashwebcenter",
+      "role": "Maintainer"
     }
+  ],
+  "homepage": "https://drupal.org/project/acquia_purge_varnish",
+  "require": {
+    "php": ">=8.1",
+    "drupal/core": "^10 || ^11",
+    "league/oauth2-client": "^2.0"
+  },
+  "require-dev": {
+    "drupal/core-dev": "^10 || ^11",
+    "phpunit/phpunit": "^9.6 || ^10",
+    "phpspec/prophecy-phpunit": "^2"
+  },
+  "support": {
+    "issues": "https://drupal.org/project/issues/acquia_purge_varnish",
+    "source": "https://git.drupalcode.org/project/acquia_purge_varnish"
+  },
+  "repositories": [
+    {
+      "type": "composer",
+      "url": "https://packages.drupal.org/8"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "Drupal\\acquia_purge_varnish\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Drupal\\Tests\\acquia_purge_varnish\\": "tests/src/"
+    }
+  },
+  "config": {
+    "sort-packages": true,
+    "allow-plugins": {
+      "composer/installers": true,
+      "drupal/core-composer-scaffold": true,
+      "phpstan/extension-installer": true,
+      "dealerdirect/phpcodesniffer-composer-installer": true
+    }
+  },
+  "minimum-stability": "dev",
+  "prefer-stable": true
 }
-

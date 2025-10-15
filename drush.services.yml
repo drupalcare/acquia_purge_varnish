@@ -1,0 +1,8 @@
+services:
+  acquia_purge_varnish.commands:
+    class: Drupal\acquia_purge_varnish\Commands\AcquiaPurgeVarnishCommands
+    arguments:
+      - '@acquia_purge_varnish.api_client'
+      - '@config.factory'
+    tags:
+      - { name: drush.command }

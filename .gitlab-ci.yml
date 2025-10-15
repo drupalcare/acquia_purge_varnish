@@ -1,0 +1,22 @@
+image: drupal:11-php8.3-apache
+
+stages:
+  - test
+
+variables:
+  COMPOSER_CACHE_DIR: "$CI_PROJECT_DIR/.composer-cache"
+
+cache:
+  key: "${CI_COMMIT_REF_SLUG}"
+  paths:
+    - .composer-cache/
+    - vendor/
+
+before_script:
+  - apt-get update -qq && apt-get install -y -qq git unzip
+  - composer install --no-interaction --prefer-dist
+
+test:unit:
+  stage: test
+  script:
+    - vendor/bin/phpunit --testsuite unit --testdox

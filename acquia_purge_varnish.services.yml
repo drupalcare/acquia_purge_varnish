@@ -1,5 +1,12 @@
 services:
-  acquia_purge_varnish.logger.channel.acquia_purge_varnish:
-    class: Drupal\Core\Logger\LoggerChannelInterface
+  logger.channel.acquia_purge_varnish:
     parent: logger.channel_base
     arguments: ['acquia_purge_varnish']
+
+  acquia_purge_varnish.api_client:
+    class: Drupal\acquia_purge_varnish\AcquiaPurgeVarnishApiClient
+    arguments:
+      - '@http_client'
+      - '@logger.channel.acquia_purge_varnish'
+      - '@config.factory'
+      - '@request_stack'

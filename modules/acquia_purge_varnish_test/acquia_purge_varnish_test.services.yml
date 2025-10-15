@@ -1,0 +1,11 @@
+services:
+  # Override the API client with a mock version for testing.
+  acquia_purge_varnish.api_client:
+    class: Drupal\acquia_purge_varnish_test\MockAcquiaPurgeVarnishApiClient
+    arguments:
+      - '@http_client'
+      - '@logger.channel.acquia_purge_varnish'
+      - '@config.factory'
+      - '@request_stack'
+    decorates: acquia_purge_varnish.api_client
+    decoration_priority: 100

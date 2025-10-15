@@ -10,16 +10,52 @@
  * Developer:    Alaa Haddad https://www.alaahaddad.com.
  */
 
+declare(strict_types=1);
+
 use Drupal\acquia_purge_varnish\Form\AcquiaPurgeVarnishForm;
+use Drupal\user\Entity\Role;
 
 /**
  * Implements hook_uninstall().
  */
-function acquia_purge_varnish_uninstall($is_syncing) {
+function acquia_purge_varnish_uninstall(bool $is_syncing): void {
   if ($is_syncing) {
     return;
   }
   \Drupal::configFactory()
     ->getEditable(AcquiaPurgeVarnishForm::SETTINGS)
     ->delete();
+}
+
+/**
+ * Update permission machine name to follow Drupal standards.
+ *
+ * Changes 'Acquia Purge Varnish' to 'administer acquia purge varnish'.
+ */
+function acquia_purge_varnish_update_9001(): string {
+  $old_permission = 'Acquia Purge Varnish';
+  $new_permission = 'administer acquia purge varnish';
+
+  // Load all roles.
+  $roles = Role::loadMultiple();
+  $updated_roles = [];
+
+  foreach ($roles as $role) {
+    // Check if role has the old permission.
+    if ($role->hasPermission($old_permission)) {
+      // Remove old permission and add new one.
+      $role->revokePermission($old_permission);
+      $role->grantPermission($new_permission);
+      $role->save();
+      $updated_roles[] = $role->label();
+    }
+  }
+
+  if (empty($updated_roles)) {
+    return t('No roles had the old Acquia Purge Varnish permission.');
+  }
+
+  return t('Updated Acquia Purge Varnish permission for the following roles: @roles', [
+    '@roles' => implode(', ', $updated_roles),
+  ]);
 }

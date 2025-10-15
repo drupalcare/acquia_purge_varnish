@@ -1,3 +1,4 @@
-Acquia Purge Varnish:
-  title: 'Acquia Purge Varnish'
+administer acquia purge varnish:
+  title: 'Administer Acquia Purge Varnish'
+  description: 'Manage Acquia Purge Varnish settings and purge varnish caches.'
   restrict access: true

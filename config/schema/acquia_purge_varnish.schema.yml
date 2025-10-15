@@ -1,0 +1,19 @@
+acquia_purge_varnish.settings:
+  type: config_object
+  label: 'Acquia Purge Varnish settings'
+  mapping:
+    api_key:
+      type: string
+      label: 'API Key'
+    api_secret:
+      type: string
+      label: 'API Secret'
+    application_name:
+      type: string
+      label: 'Application Name'
+    domain:
+      type: string
+      label: 'Domain selection'
+    log_requests:
+      type: boolean
+      label: 'Log requests'
