@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Acquia Purge Varnish.
+ * Install, update and uninstall functions for the Acquia Purge Varnish module.
  *
  * Filename:     acquia_purge_varnish.install
  * Website:      https://www.flashwebcenter.com
@@ -12,19 +12,89 @@
 
 declare(strict_types=1);
 
-use Drupal\acquia_purge_varnish\Form\AcquiaPurgeVarnishForm;
-use Drupal\user\Entity\Role;
+/**
+ * Implements hook_install().
+ */
+function acquia_purge_varnish_install(): void {
+  // Set default configuration values.
+  $config = \Drupal::configFactory()->getEditable('acquia_purge_varnish.settings');
+
+  if ($config->get('domain') === NULL) {
+    $config->set('domain', 'current')->save();
+  }
+
+  if ($config->get('log_requests') === NULL) {
+    $config->set('log_requests', FALSE)->save();
+  }
+
+  // Log installation.
+  \Drupal::logger('acquia_purge_varnish')->notice('Acquia Purge Varnish module installed successfully.');
+}
 
 /**
  * Implements hook_uninstall().
  */
-function acquia_purge_varnish_uninstall(bool $is_syncing): void {
-  if ($is_syncing) {
-    return;
+function acquia_purge_varnish_uninstall(): void {
+  // Clean up configuration.
+  \Drupal::configFactory()->getEditable('acquia_purge_varnish.settings')->delete();
+
+  // Log uninstallation.
+  \Drupal::logger('acquia_purge_varnish')->notice('Acquia Purge Varnish module uninstalled.');
+}
+
+/**
+ * Implements hook_requirements().
+ */
+function acquia_purge_varnish_requirements(string $phase): array {
+  $requirements = [];
+
+  // Only check during runtime.
+  if ($phase === 'runtime') {
+    $config = \Drupal::config('acquia_purge_varnish.settings');
+    $api_key = $config->get('api_key');
+    $api_secret = $config->get('api_secret');
+
+    // Check if credentials are configured.
+    if (empty($api_key) || empty($api_secret)) {
+      $requirements['acquia_purge_varnish_credentials'] = [
+        'title' => t('Acquia Purge Varnish'),
+        'value' => t('Not configured'),
+        'description' => t('API credentials are not configured. Please configure them at <a href="@url">the settings page</a>.', [
+          '@url' => '/admin/config/acquia-purge/settings',
+        ]),
+        'severity' => REQUIREMENT_WARNING,
+      ];
+    }
+    else {
+      $requirements['acquia_purge_varnish_credentials'] = [
+        'title' => t('Acquia Purge Varnish'),
+        'value' => t('Configured'),
+        'description' => t('API credentials are configured.'),
+        'severity' => REQUIREMENT_OK,
+      ];
+    }
+
+    // Check if on Acquia environment.
+    $api_client = \Drupal::service('acquia_purge_varnish.api_client');
+    if (!$api_client->isAcquiaEnvironment()) {
+      $requirements['acquia_purge_varnish_environment'] = [
+        'title' => t('Acquia Purge Varnish - Environment'),
+        'value' => t('Not on Acquia'),
+        'description' => t('This site is not running on Acquia Cloud Platform. Varnish purging will not work.'),
+        'severity' => REQUIREMENT_WARNING,
+      ];
+    }
+    else {
+      $environment = $api_client->getAcquiaEnvironment();
+      $requirements['acquia_purge_varnish_environment'] = [
+        'title' => t('Acquia Purge Varnish - Environment'),
+        'value' => t('Acquia @env', ['@env' => $environment]),
+        'severity' => REQUIREMENT_OK,
+      ];
+    }
   }
-  \Drupal::configFactory()
-    ->getEditable(AcquiaPurgeVarnishForm::SETTINGS)
-    ->delete();
+
+  return $requirements;
 }
 
 /**
@@ -33,29 +103,38 @@ function acquia_purge_varnish_uninstall(bool $is_syncing): void {
  * Changes 'Acquia Purge Varnish' to 'administer acquia purge varnish'.
  */
 function acquia_purge_varnish_update_9001(): string {
+  // Get the role storage.
+  $role_storage = \Drupal::entityTypeManager()->getStorage('user_role');
+
+  // Old permission (if it exists).
   $old_permission = 'Acquia Purge Varnish';
+  // New permission.
   $new_permission = 'administer acquia purge varnish';
 
   // Load all roles.
-  $roles = Role::loadMultiple();
-  $updated_roles = [];
+  $roles = $role_storage->loadMultiple();
 
+  $updated_roles = [];
   foreach ($roles as $role) {
     // Check if role has the old permission.
     if ($role->hasPermission($old_permission)) {
-      // Remove old permission and add new one.
+      // Remove old permission.
       $role->revokePermission($old_permission);
+      // Grant new permission.
       $role->grantPermission($new_permission);
       $role->save();
       $updated_roles[] = $role->label();
     }
   }
 
-  if (empty($updated_roles)) {
-    return t('No roles had the old Acquia Purge Varnish permission.');
+  if (!empty($updated_roles)) {
+    return sprintf(
+      'Updated permission from "%s" to "%s" for roles: %s',
+      $old_permission,
+      $new_permission,
+      implode(', ', $updated_roles)
+    );
   }
 
-  return t('Updated Acquia Purge Varnish permission for the following roles: @roles', [
-    '@roles' => implode(', ', $updated_roles),
-  ]);
+  return 'No roles needed permission updates.';
 }
