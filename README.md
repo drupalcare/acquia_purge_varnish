@@ -50,6 +50,14 @@ Configure:
 4. **Domain Setting** - Choose to purge all domains or current domain only
 5. **Log Requests** - Enable to log API requests for debugging
 
+### Custom Domains (NEW)
+
+Purge specific domains you choose - perfect for multi-site setups.
+
+**Via UI:**
+1. Select "Select specific domains"
+2. Enter domains (one per line)
+
 ### Method 2: Drush Commands
 
 ```bash
@@ -129,6 +137,12 @@ drush apv-purge --domain=current
 
 ```bash
 drush apv-status
+```
+
+**Via Drush:**
+```bash
+drush apv:config --domain=custom --custom-domains="site1.com,site2.com"
+drush apv:purge
 ```
 
 Displays:

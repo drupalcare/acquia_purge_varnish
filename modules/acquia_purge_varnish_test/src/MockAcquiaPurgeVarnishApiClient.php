@@ -56,8 +56,7 @@ class MockAcquiaPurgeVarnishApiClient extends AcquiaPurgeVarnishApiClient {
     ]);
 
     // Simulate network delay (optional, for realistic testing).
-    // usleep(100000); // 0.1 second delay
-
+    // usleep(100000); // 0.1 second delay.
     // Parse URL to determine which mock response to return.
     if (str_contains($url, '/api/applications') && !str_contains($url, '/environments')) {
       return $this->getMockApplicationsResponse();
@@ -129,7 +128,7 @@ class MockAcquiaPurgeVarnishApiClient extends AcquiaPurgeVarnishApiClient {
   /**
    * Returns mock applications API response.
    *
-   * Simulates: GET https://cloud.acquia.com/api/applications
+   * Simulates: GET https://cloud.acquia.com/api/applications.
    *
    * @return array
    *   Mock applications data matching Acquia API v2 structure.
@@ -186,7 +185,7 @@ class MockAcquiaPurgeVarnishApiClient extends AcquiaPurgeVarnishApiClient {
   /**
    * Returns mock environments API response.
    *
-   * Simulates: GET https://cloud.acquia.com/api/applications/{uuid}/environments
+   * GET https://cloud.acquia.com/api/applications/{uuid}/environments.
    *
    * @return array
    *   Mock environments data matching Acquia API v2 structure.
@@ -335,7 +334,7 @@ class MockAcquiaPurgeVarnishApiClient extends AcquiaPurgeVarnishApiClient {
    * Returns mock purge response.
    *
    * Simulates: POST /environments/{id}/actions/clear-caches
-   * Or: POST /environments/{id}/domains/{domain}/actions/clear-caches
+   * Or: POST /environments/{id}/domains/{domain}/actions/clear-caches.
    *
    * @param string $url
    *   The purge URL being called.

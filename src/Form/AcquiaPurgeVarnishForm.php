@@ -173,9 +173,25 @@ class AcquiaPurgeVarnishForm extends ConfigFormBase {
       '#options' => [
         'all' => $this->t('All domains'),
         'current' => $this->t('Current domain only'),
+        'custom' => $this->t('Select specific domains'),
       ],
       '#default_value' => $config->get('domain') ?? 'current',
       '#required' => TRUE,
+    ];
+
+    $form['purge_settings']['custom_domains'] = [
+      '#type' => 'textarea',
+      '#title' => $this->t('Custom domains'),
+      '#description' => $this->t('Enter one domain per line.'),
+      '#default_value' => implode("\n", $config->get('custom_domains') ?? []),
+      '#states' => [
+        'visible' => [
+          ':input[name="domain"]' => ['value' => 'custom'],
+        ],
+        'required' => [
+          ':input[name="domain"]' => ['value' => 'custom'],
+        ],
+      ],
     ];
 
     $form['purge_settings']['log_requests'] = [
@@ -191,12 +207,70 @@ class AcquiaPurgeVarnishForm extends ConfigFormBase {
   /**
    * {@inheritdoc}
    */
+  public function validateForm(array &$form, FormStateInterface $form_state): void {
+    parent::validateForm($form, $form_state);
+
+    // Only validate if not overridden in settings.php.
+    if (!$this->isOverridden('api_key')) {
+      $apiKey = trim((string) $form_state->getValue('api_key'));
+      if (empty($apiKey)) {
+        $form_state->setErrorByName('api_key', $this->t('API Key is required.'));
+      }
+    }
+
+    if (!$this->isOverridden('api_secret')) {
+      $apiSecret = trim((string) $form_state->getValue('api_secret'));
+      if (empty($apiSecret)) {
+        $form_state->setErrorByName('api_secret', $this->t('API Secret is required.'));
+      }
+    }
+    if ($form_state->getValue('domain') === 'custom') {
+      $domains = $form_state->getValue('custom_domains');
+      $domainList = array_filter(array_map('trim', explode("\n", $domains)));
+
+      if (empty($domainList)) {
+        $form_state->setErrorByName('custom_domains',
+          $this->t('Please enter at least one domain.'));
+      }
+
+      // Validate domain format.
+      foreach ($domainList as $domain) {
+        if (!preg_match('/^[a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,}$/i', $domain)) {
+          $form_state->setErrorByName('custom_domains',
+            $this->t('Invalid domain: @domain', ['@domain' => $domain]));
+        }
+      }
+    }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function submitForm(array &$form, FormStateInterface $form_state): void {
-    $this->config(self::SETTINGS)
-      ->set('api_key', $form_state->getValue('api_key'))
-      ->set('api_secret', $form_state->getValue('api_secret'))
-      ->set('application_name', $form_state->getValue('application_name'))
-      ->set('domain', $form_state->getValue('domain'))
+    $config = $this->config(self::SETTINGS);
+
+    // Only save values that aren't overridden in settings.php.
+    if (!$this->isOverridden('api_key')) {
+      $config->set('api_key', trim((string) $form_state->getValue('api_key')));
+    }
+
+    if (!$this->isOverridden('api_secret')) {
+      $config->set('api_secret', trim((string) $form_state->getValue('api_secret')));
+    }
+
+    if (!$this->isOverridden('application_name')) {
+      $config->set('application_name', trim((string) $form_state->getValue('application_name')));
+    }
+
+    $config->set('domain', $form_state->getValue('domain'));
+
+    if ($form_state->getValue('domain') === 'custom') {
+      $domains = $form_state->getValue('custom_domains');
+      $domainList = array_filter(array_map('trim', explode("\n", $domains)));
+      $config->set('custom_domains', $domainList);
+    }
+
+    $config->set('domain', $form_state->getValue('domain'))
       ->set('log_requests', (bool) $form_state->getValue('log_requests'))
       ->save();
 
@@ -209,17 +283,12 @@ class AcquiaPurgeVarnishForm extends ConfigFormBase {
    * @param string $name
    *   The configuration key to check.
    *
-   * @return mixed
-   *   The overridden value if it exists, FALSE otherwise.
+   * @return bool
+   *   TRUE if overridden, FALSE otherwise.
    */
-  protected function isOverridden(string $name): mixed {
+  protected function isOverridden(string $name): bool {
     $acquiaCredentials = Settings::get('acquia_purge_varnish_credentials');
-
-    if (!empty($acquiaCredentials[$name])) {
-      return $acquiaCredentials[$name];
-    }
-
-    return FALSE;
+    return !empty($acquiaCredentials[$name]);
   }
 
 }

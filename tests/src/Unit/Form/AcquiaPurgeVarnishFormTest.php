@@ -22,10 +22,39 @@ use Drupal\Tests\UnitTestCase;
  */
 class AcquiaPurgeVarnishFormTest extends UnitTestCase {
 
+  /**
+   * The config factory mock.
+   *
+   * @var \Drupal\Core\Config\ConfigFactoryInterface
+   */
   protected ConfigFactoryInterface $configFactory;
+
+  /**
+   * The typed config manager mock.
+   *
+   * @var \Drupal\Core\Config\TypedConfigManagerInterface
+   */
   protected TypedConfigManagerInterface $typedConfigManager;
+
+  /**
+   * The logger channel mock.
+   *
+   * @var \Drupal\Core\Logger\LoggerChannelInterface
+   */
   protected LoggerChannelInterface $logger;
+
+  /**
+   * The API client mock.
+   *
+   * @var \Drupal\acquia_purge_varnish\AcquiaPurgeVarnishApiClient
+   */
   protected AcquiaPurgeVarnishApiClient $apiClient;
+
+  /**
+   * The form under test.
+   *
+   * @var \Drupal\acquia_purge_varnish\Form\AcquiaPurgeVarnishForm
+   */
   protected AcquiaPurgeVarnishForm $form;
 
   /**

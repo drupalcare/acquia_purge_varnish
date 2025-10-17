@@ -21,10 +21,39 @@ use Symfony\Component\HttpFoundation\ServerBag;
  */
 class AcquiaPurgeVarnishApiClientTest extends UnitTestCase {
 
+  /**
+   * The HTTP client mock.
+   *
+   * @var \GuzzleHttp\ClientInterface
+   */
   protected ClientInterface $httpClient;
+
+  /**
+   * The logger channel mock.
+   *
+   * @var \Drupal\Core\Logger\LoggerChannelInterface
+   */
   protected LoggerChannelInterface $logger;
+
+  /**
+   * The config factory mock.
+   *
+   * @var \Drupal\Core\Config\ConfigFactoryInterface
+   */
   protected ConfigFactoryInterface $configFactory;
+
+  /**
+   * The request stack mock.
+   *
+   * @var \Symfony\Component\HttpFoundation\RequestStack
+   */
   protected RequestStack $requestStack;
+
+  /**
+   * The API client under test.
+   *
+   * @var \Drupal\acquia_purge_varnish\AcquiaPurgeVarnishApiClient
+   */
   protected AcquiaPurgeVarnishApiClient $apiClient;
 
   /**

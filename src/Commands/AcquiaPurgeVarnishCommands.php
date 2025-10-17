@@ -37,8 +37,8 @@ final class AcquiaPurgeVarnishCommands extends DrushCommands {
   /**
    * {@inheritdoc}
    */
-  public static function create(ContainerInterface $container): self {
-    return new self(
+  public static function create(ContainerInterface $container): static {
+    return new static(
       $container->get('acquia_purge_varnish.api_client'),
       $container->get('config.factory')
     );
@@ -52,19 +52,26 @@ final class AcquiaPurgeVarnishCommands extends DrushCommands {
    *
    * @command acquia-purge-varnish:purge
    * @aliases apv-purge,apv:purge
-   * @option domain Specify which domain(s) to purge: 'all' or 'current'. Defaults to config setting.
+   * @option domain Specify which domain(s) to purge: 'all' or 'current'.
+   *   Defaults to config setting.
+   * @option domains Comma-separated list of specific domains to purge.
+   *   Example: example.com,www.example.com
    * @usage acquia-purge-varnish:purge
    *   Purge Varnish cache using configured domain setting.
    * @usage acquia-purge-varnish:purge --domain=all
    *   Purge Varnish cache for all domains in the environment.
    * @usage acquia-purge-varnish:purge --domain=current
    *   Purge Varnish cache for the current domain only.
+   * @usage acquia-purge-varnish:purge --domains="example.com,www.example.com"
+   *   Purge Varnish cache for specific domains.
    */
   #[CLI\Command(name: 'acquia-purge-varnish:purge', aliases: ['apv-purge', 'apv:purge'])]
   #[CLI\Option(name: 'domain', description: 'Which domain(s) to purge: all or current')]
+  #[CLI\Option(name: 'domains', description: 'Comma-separated list of specific domains')]
   #[CLI\Usage(name: 'acquia-purge-varnish:purge', description: 'Purge Varnish cache using configured domain setting')]
   #[CLI\Usage(name: 'acquia-purge-varnish:purge --domain=all', description: 'Purge all domains')]
-  public function purge(array $options = ['domain' => NULL]): void {
+  #[CLI\Usage(name: 'acquia-purge-varnish:purge --domains="example.com,www.example.com"', description: 'Purge specific domains')]
+  public function purge(array $options = ['domain' => NULL, 'domains' => NULL]): void {
     // Check if we're on Acquia.
     if (!$this->apiClient->isAcquiaEnvironment()) {
       $this->logger()->error('This command can only be run on Acquia Cloud Platform.');
@@ -88,88 +95,132 @@ final class AcquiaPurgeVarnishCommands extends DrushCommands {
       return;
     }
 
-    // Determine domain setting.
-    $domainSetting = $options['domain'] ?? $this->getAcquiaConfigValue('domain') ?? 'current';
-    if (!in_array($domainSetting, ['all', 'current'], TRUE)) {
-      $this->logger()->error('Invalid domain option. Use "all" or "current".');
-      return;
+    $customDomains = NULL;
+    if (!empty($options['domains'])) {
+      // Parse comma-separated domains.
+      $customDomains = array_filter(
+        array_map('trim', explode(',', $options['domains']))
+      );
+
+      if (empty($customDomains)) {
+        $this->logger()->error('Invalid --domains option. Provide comma-separated domains.');
+        return;
+      }
+
+      $domainSetting = 'custom';
+      $this->logger()->info(dt('Using custom domains from --domains option: @domains', [
+        '@domains' => implode(', ', $customDomains),
+      ]));
+    }
+    // Check if configured domain setting is 'custom'.
+    elseif ($this->getAcquiaConfigValue('domain') === 'custom') {
+      $customDomains = $this->getAcquiaConfigValue('custom_domains') ?? [];
+      if (empty($customDomains)) {
+        $this->logger()->warning('Custom domains configured but list is empty. Using current domain.');
+        $domainSetting = 'current';
+      }
+      else {
+        $domainSetting = 'custom';
+        $this->logger()->info(dt('Using configured custom domains: @domains', [
+          '@domains' => implode(', ', $customDomains),
+        ]));
+      }
+    }
+    // Use --domain option or fall back to config.
+    else {
+      $domainSetting = $options['domain']
+        ?? $this->getAcquiaConfigValue('domain')
+        ?? 'current';
     }
 
-    $this->logger()->info(dt('Domain setting: @setting', ['@setting' => $domainSetting]));
-    $this->logger()->info(dt('Current domain: @domain', ['@domain' => $currentDomain]));
-    $this->logger()->info(dt('Application: @app', ['@app' => $applicationName]));
+    $this->logger()->info(dt('Domain setting: @setting', [
+      '@setting' => $domainSetting,
+    ]));
+    $this->logger()->info(dt('Current domain: @domain', [
+      '@domain' => $currentDomain,
+    ]));
+    $this->logger()->info(dt('Application: @app', [
+      '@app' => $applicationName,
+    ]));
 
     // Step 1: Get application UUID.
     $this->logger()->info('Fetching application information...');
-    $applicationsUrl = 'https://cloud.acquia.com/api/applications';
-    $applications = $this->apiClient->makeRequest('GET', $applicationsUrl, [$apiKey, $apiSecret]);
-
-    if (empty($applications['_embedded']['items'])) {
-      $this->logger()->error('Failed to retrieve applications from Acquia API.');
+    $applicationUuid = $this->fetchApplicationUuid(
+      [$apiKey, $apiSecret],
+      $applicationName
+    );
+    if (!$applicationUuid) {
       return;
     }
 
-    // Find matching application.
-    $applicationUuid = NULL;
-    foreach ($applications['_embedded']['items'] as $application) {
-      if (isset($application['name']) && strcasecmp($application['name'], $applicationName) === 0) {
-        $applicationUuid = $application['uuid'] ?? NULL;
-        break;
-      }
-    }
-
-    if (empty($applicationUuid)) {
-      $this->logger()->error(dt('Application "@name" not found in your Acquia account.', ['@name' => $applicationName]));
-      return;
-    }
-
-    $this->logger()->success(dt('Found application: @uuid', ['@uuid' => $applicationUuid]));
+    $this->logger()->success(dt('Found application: @uuid', [
+      '@uuid' => $applicationUuid,
+    ]));
 
     // Step 2: Get environments.
     $this->logger()->info('Fetching environment information...');
-    $environmentsUrl = "https://cloud.acquia.com/api/applications/{$applicationUuid}/environments";
-    $environmentsData = $this->apiClient->makeRequest('GET', $environmentsUrl, [$apiKey, $apiSecret]);
-
-    if (empty($environmentsData['_embedded']['items'])) {
-      $this->logger()->error('Failed to retrieve environments from Acquia API.');
+    $environments = $this->fetchEnvironments(
+      [$apiKey, $apiSecret],
+      $applicationUuid
+    );
+    if (empty($environments)) {
       return;
     }
 
-    $environments = $environmentsData['_embedded']['items'];
-    $this->logger()->success(dt('Found @count environment(s)', ['@count' => count($environments)]));
+    $this->logger()->success(dt('Found @count environment(s)', [
+      '@count' => count($environments),
+    ]));
 
-    // Step 3: Find matching environment and build purge request.
     [$purgeUrl, $purgeOptions, $targetDomains] = $this->buildPurgeRequest(
       $environments,
       $currentDomain,
-      $domainSetting
+      $domainSetting,
+      $customDomains
     );
 
     if (empty($purgeUrl)) {
-      $this->logger()->error(dt('Could not find domain "@domain" in any Acquia environment.', ['@domain' => $currentDomain]));
+      $message = dt('Could not find domain "@domain" in any Acquia environment.', [
+        '@domain' => $currentDomain,
+      ]);
+      $this->logger()->error($message);
       return;
     }
 
     // Display what will be purged.
-    if ($domainSetting === 'all') {
+    if ($domainSetting === 'custom') {
+      $this->logger()->notice(dt('Purging @count custom domain(s): @domains', [
+        '@count' => count($targetDomains),
+        '@domains' => implode(', ', $targetDomains),
+      ]));
+    }
+    elseif ($domainSetting === 'all') {
       $this->logger()->notice(dt('Purging @count domain(s): @domains', [
         '@count' => count($targetDomains),
         '@domains' => implode(', ', $targetDomains),
       ]));
     }
     else {
-      $this->logger()->notice(dt('Purging domain: @domain', ['@domain' => $currentDomain]));
+      $this->logger()->notice(dt('Purging domain: @domain', [
+        '@domain' => $currentDomain,
+      ]));
     }
 
     // Step 4: Execute purge.
-    $result = $this->apiClient->makeRequest('POST', $purgeUrl, [$apiKey, $apiSecret], $purgeOptions);
+    $result = $this->apiClient->makeRequest(
+      'POST',
+      $purgeUrl,
+      [$apiKey, $apiSecret],
+      $purgeOptions
+    );
 
     if (!empty($result['message'])) {
       $this->logger()->success($result['message']);
 
       // Log task information if available.
       if (!empty($result['_links']['notification']['href'])) {
-        $this->logger()->info(dt('Task notification: @url', ['@url' => $result['_links']['notification']['href']]));
+        $this->logger()->info(dt('Task notification: @url', [
+          '@url' => $result['_links']['notification']['href'],
+        ]));
       }
     }
     else {
@@ -207,7 +258,6 @@ final class AcquiaPurgeVarnishCommands extends DrushCommands {
     $this->io()->newLine();
 
     // Check configuration.
-    $config = $this->configFactory->get(AcquiaPurgeVarnishForm::SETTINGS);
     $settingsOverride = Settings::get('acquia_purge_varnish_credentials');
 
     $this->logger()->notice('=== Configuration ===');
@@ -218,6 +268,10 @@ final class AcquiaPurgeVarnishCommands extends DrushCommands {
     $appName = $this->getAcquiaConfigValue('application_name');
     $domainSetting = $this->getAcquiaConfigValue('domain') ?? 'current';
     $logRequests = $this->getAcquiaConfigValue('log_requests') ?? FALSE;
+    $customDomains = $this->getAcquiaConfigValue('custom_domains') ?? [];
+    $customDomainsDisplay = !empty($customDomains)
+      ? implode(', ', $customDomains)
+      : 'None configured';
 
     $this->io()->definitionList([
       'API Key' => $apiKeySet ? '✓ Configured' : '✗ Not configured',
@@ -225,7 +279,10 @@ final class AcquiaPurgeVarnishCommands extends DrushCommands {
       'Application Name' => $appName ?: '(auto-detect from AH_SITE_GROUP)',
       'Domain Setting' => $domainSetting,
       'Log Requests' => $logRequests ? 'Enabled' : 'Disabled',
-      'Settings Override' => !empty($settingsOverride) ? '✓ Yes (in settings.php)' : '✗ No',
+      'Custom Domains' => $customDomainsDisplay,
+      'Settings Override' => !empty($settingsOverride)
+        ? '✓ Yes (in settings.php)'
+        : '✗ No',
     ]);
 
     $this->io()->newLine();
@@ -274,33 +331,20 @@ final class AcquiaPurgeVarnishCommands extends DrushCommands {
     [$apiKey, $apiSecret, $applicationName] = $credentials;
 
     // Get application UUID.
-    $applicationsUrl = 'https://cloud.acquia.com/api/applications';
-    $applications = $this->apiClient->makeRequest('GET', $applicationsUrl, [$apiKey, $apiSecret]);
-
-    if (empty($applications['_embedded']['items'])) {
-      $this->logger()->error('Failed to retrieve applications from Acquia API.');
-      return;
-    }
-
-    $applicationUuid = NULL;
-    foreach ($applications['_embedded']['items'] as $application) {
-      if (isset($application['name']) && strcasecmp($application['name'], $applicationName) === 0) {
-        $applicationUuid = $application['uuid'] ?? NULL;
-        break;
-      }
-    }
-
-    if (empty($applicationUuid)) {
-      $this->logger()->error(dt('Application "@name" not found.', ['@name' => $applicationName]));
+    $applicationUuid = $this->fetchApplicationUuid(
+      [$apiKey, $apiSecret],
+      $applicationName
+    );
+    if (!$applicationUuid) {
       return;
     }
 
     // Get environments.
-    $environmentsUrl = "https://cloud.acquia.com/api/applications/{$applicationUuid}/environments";
-    $environmentsData = $this->apiClient->makeRequest('GET', $environmentsUrl, [$apiKey, $apiSecret]);
-
-    if (empty($environmentsData['_embedded']['items'])) {
-      $this->logger()->error('Failed to retrieve environments.');
+    $environments = $this->fetchEnvironments(
+      [$apiKey, $apiSecret],
+      $applicationUuid
+    );
+    if (empty($environments)) {
       return;
     }
 
@@ -308,13 +352,15 @@ final class AcquiaPurgeVarnishCommands extends DrushCommands {
     $currentHost = $this->apiClient->getCurrentHost();
     $rows = [];
 
-    foreach ($environmentsData['_embedded']['items'] as $environment) {
+    foreach ($environments as $environment) {
       $envName = $environment['name'] ?? 'Unknown';
       $envId = $environment['id'] ?? 'Unknown';
       $domains = $environment['domains'] ?? [];
 
       foreach ($domains as $domain) {
-        $isCurrent = ($envName === $currentEnv && $domain === $currentHost) ? '✓' : '';
+        $isCurrent = ($envName === $currentEnv && $domain === $currentHost)
+          ? '✓'
+          : '';
         $rows[] = [
           'environment' => $envName,
           'id' => $envId,
@@ -354,7 +400,9 @@ final class AcquiaPurgeVarnishCommands extends DrushCommands {
         );
 
         $this->io()->newLine();
-        $this->logger()->success(dt('Found @count domain(s)', ['@count' => count($rows)]));
+        $this->logger()->success(dt('Found @count domain(s)', [
+          '@count' => count($rows),
+        ]));
         break;
     }
   }
@@ -372,7 +420,8 @@ final class AcquiaPurgeVarnishCommands extends DrushCommands {
    * @option application-name Acquia Application Name
    * @option domain Domain setting: all or current
    * @option log-requests Enable request logging (0 or 1)
-   * @usage acquia-purge-varnish:config --api-key="YOUR_KEY" --api-secret="YOUR_SECRET"
+   * @usage acquia-purge-varnish:config --api-key="YOUR_KEY"
+   *   --api-secret="YOUR_SECRET"
    *   Configure API credentials.
    * @usage acquia-purge-varnish:config --domain=all
    *   Set domain preference to purge all domains.
@@ -386,44 +435,79 @@ final class AcquiaPurgeVarnishCommands extends DrushCommands {
   #[CLI\Option(name: 'domain', description: 'Domain setting: all or current')]
   #[CLI\Option(name: 'log-requests', description: 'Enable request logging (0 or 1)')]
   #[CLI\Usage(name: 'acquia-purge-varnish:config --api-key="KEY"', description: 'Set API key')]
+  #[CLI\Option(name: 'custom-domains', description: 'Comma-separated domains for custom setting')]
+  #[CLI\Usage(name: 'acquia-purge-varnish:config --domain=custom --custom-domains="example.com,www.example.com"', description: 'Set custom domains')]
   public function configureSettings(
     array $options = [
       'api-key' => NULL,
       'api-secret' => NULL,
       'application-name' => NULL,
       'domain' => NULL,
+      'custom-domains' => NULL,
       'log-requests' => NULL,
     ],
   ): void {
-    $config = $this->configFactory->getEditable(AcquiaPurgeVarnishForm::SETTINGS);
+    $config = $this->configFactory->getEditable(
+      AcquiaPurgeVarnishForm::SETTINGS
+    );
     $changed = FALSE;
 
     if ($options['api-key'] !== NULL) {
-      $config->set('api_key', $options['api-key']);
+      $config->set('api_key', trim((string) $options['api-key']));
       $this->logger()->success('API Key configured');
       $changed = TRUE;
     }
 
     if ($options['api-secret'] !== NULL) {
-      $config->set('api_secret', $options['api-secret']);
+      $config->set('api_secret', trim((string) $options['api-secret']));
       $this->logger()->success('API Secret configured');
       $changed = TRUE;
     }
 
     if ($options['application-name'] !== NULL) {
-      $config->set('application_name', $options['application-name']);
-      $this->logger()->success(dt('Application Name set to: @name', ['@name' => $options['application-name']]));
+      $config->set(
+        'application_name',
+        trim((string) $options['application-name'])
+      );
+      $this->logger()->success(dt('Application Name set to: @name', [
+        '@name' => $options['application-name'],
+      ]));
       $changed = TRUE;
     }
 
     if ($options['domain'] !== NULL) {
-      if (!in_array($options['domain'], ['all', 'current'], TRUE)) {
+      if (!in_array($options['domain'], ['all', 'current', 'custom'], TRUE)) {
         $this->logger()->error('Invalid domain option. Use "all" or "current".');
         return;
       }
       $config->set('domain', $options['domain']);
-      $this->logger()->success(dt('Domain setting set to: @domain', ['@domain' => $options['domain']]));
+      $this->logger()->success(dt('Domain setting set to: @domain', [
+        '@domain' => $options['domain'],
+      ]));
       $changed = TRUE;
+    }
+
+    if ($options['custom-domains'] !== NULL) {
+      $customDomains = array_filter(
+        array_map('trim', explode(',', $options['custom-domains']))
+      );
+
+      if (empty($customDomains)) {
+        $this->logger()->error('Invalid custom-domains. Provide comma-separated domains.');
+        return;
+      }
+
+      $config->set('custom_domains', $customDomains);
+      $this->logger()->success(dt('Custom domains set to: @domains', [
+        '@domains' => implode(', ', $customDomains),
+      ]));
+      $changed = TRUE;
+
+      // Optionally auto-set domain to 'custom'.
+      if ($config->get('domain') !== 'custom') {
+        $config->set('domain', 'custom');
+        $this->logger()->notice('Domain setting automatically changed to "custom"');
+      }
     }
 
     if ($options['log-requests'] !== NULL) {
@@ -466,50 +550,70 @@ final class AcquiaPurgeVarnishCommands extends DrushCommands {
 
     [$apiKey, $apiSecret, $applicationName] = $credentials;
 
-    $this->logger()->info(dt('Using application name: @name', ['@name' => $applicationName]));
+    $this->logger()->info(dt('Using application name: @name', [
+      '@name' => $applicationName,
+    ]));
     $this->io()->newLine();
 
     // Test API connectivity.
     $applicationsUrl = 'https://cloud.acquia.com/api/applications';
-    $applications = $this->apiClient->makeRequest('GET', $applicationsUrl, [$apiKey, $apiSecret]);
+    $applications = $this->apiClient->makeRequest(
+      'GET',
+      $applicationsUrl,
+      [$apiKey, $apiSecret]
+    );
 
     if (empty($applications)) {
-      $this->logger()->error('Failed to connect to Acquia API. Check your credentials and network connection.');
+      $message = 'Failed to connect to Acquia API. Check your credentials';
+      $message .= ' and network connection.';
+      $this->logger()->error($message);
       return;
     }
 
     if (isset($applications['error'])) {
-      $this->logger()->error(dt('API Error: @error', ['@error' => $applications['message'] ?? 'Unknown error']));
+      $this->logger()->error(dt('API Error: @error', [
+        '@error' => $applications['message'] ?? 'Unknown error',
+      ]));
       return;
     }
 
-    if (empty($applications['_embedded']['items'])) {
+    $items = $applications['_embedded']['items'] ?? NULL;
+    if (!isset($items) || !is_array($items)) {
+      $this->logger()->error('Invalid response structure from Acquia API.');
+      return;
+    }
+
+    if (empty($items)) {
       $this->logger()->error('No applications found in your Acquia account.');
       return;
     }
 
     $this->logger()->success('✓ Successfully connected to Acquia API');
     $this->logger()->success(dt('✓ Found @count application(s) in your account', [
-      '@count' => count($applications['_embedded']['items']),
+      '@count' => count($items),
     ]));
 
     // Find matching application.
     $found = FALSE;
-    foreach ($applications['_embedded']['items'] as $application) {
-      if (isset($application['name']) && strcasecmp($application['name'], $applicationName) === 0) {
+    foreach ($items as $application) {
+      if (isset($application['name'])
+        && strcasecmp($application['name'], $applicationName) === 0) {
         $found = TRUE;
         $this->logger()->success(dt('✓ Found application: @name (UUID: @uuid)', [
           '@name' => $application['name'],
-          '@uuid' => $application['uuid'],
+          '@uuid' => $application['uuid'] ?? 'Unknown',
         ]));
         break;
       }
     }
 
     if (!$found) {
-      $this->logger()->error(dt('✗ Application "@name" not found in your account.', ['@name' => $applicationName]));
+      $message = dt('✗ Application "@name" not found in your account.', [
+        '@name' => $applicationName,
+      ]);
+      $this->logger()->error($message);
       $this->logger()->notice('Available applications:');
-      foreach ($applications['_embedded']['items'] as $application) {
+      foreach ($items as $application) {
         $this->logger()->notice('  - ' . ($application['name'] ?? 'Unknown'));
       }
       return;
@@ -520,15 +624,85 @@ final class AcquiaPurgeVarnishCommands extends DrushCommands {
   }
 
   /**
+   * Fetches application UUID from Acquia API.
+   *
+   * @param array $credentials
+   *   The API credentials [key, secret].
+   * @param string $applicationName
+   *   The application name to find.
+   *
+   * @return string|null
+   *   The application UUID or NULL on failure.
+   */
+  protected function fetchApplicationUuid(array $credentials, string $applicationName): ?string {
+    $applicationsUrl = 'https://cloud.acquia.com/api/applications';
+    $applications = $this->apiClient->makeRequest(
+      'GET',
+      $applicationsUrl,
+      $credentials
+    );
+
+    $items = $applications['_embedded']['items'] ?? NULL;
+    if (!isset($items) || !is_array($items)) {
+      $this->logger()->error('Failed to retrieve applications from Acquia API.');
+      return NULL;
+    }
+
+    if (empty($items)) {
+      $this->logger()->error('No applications found in your Acquia account.');
+      return NULL;
+    }
+
+    // Find matching application.
+    foreach ($items as $application) {
+      if (isset($application['name'], $application['uuid'])
+        && strcasecmp($application['name'], $applicationName) === 0) {
+        return $application['uuid'];
+      }
+    }
+
+    $this->logger()->error(dt('Application "@name" not found.', [
+      '@name' => $applicationName,
+    ]));
+    return NULL;
+  }
+
+  /**
+   * Fetches environments for an application.
+   *
+   * @param array $credentials
+   *   The API credentials [key, secret].
+   * @param string $applicationUuid
+   *   The application UUID.
+   *
+   * @return array
+   *   Array of environments or empty array on failure.
+   */
+  protected function fetchEnvironments(array $credentials, string $applicationUuid): array {
+    $url = "https://cloud.acquia.com/api/applications/{$applicationUuid}";
+    $url .= "/environments";
+    $environmentsData = $this->apiClient->makeRequest('GET', $url, $credentials);
+
+    $items = $environmentsData['_embedded']['items'] ?? NULL;
+    if (!isset($items) || !is_array($items)) {
+      $this->logger()->error('Failed to retrieve environments from Acquia API.');
+      return [];
+    }
+
+    return $items;
+  }
+
+  /**
    * Gets API credentials from settings or config.
    *
    * @return array|null
-   *   Array of [api_key, api_secret, application_name] or NULL if not configured.
+   *   Array of [api_key, api_secret, application_name] or NULL if not set.
    */
   protected function getCredentials(): ?array {
     $apiKey = $this->getAcquiaConfigValue('api_key');
     $apiSecret = $this->getAcquiaConfigValue('api_secret');
-    $applicationName = $this->getAcquiaConfigValue('application_name') ?? $this->apiClient->getAcquiaSiteGroup();
+    $applicationName = $this->getAcquiaConfigValue('application_name')
+      ?? $this->apiClient->getAcquiaSiteGroup();
 
     if (empty($apiKey) || empty($apiSecret) || empty($applicationName)) {
       return NULL;
@@ -539,8 +713,6 @@ final class AcquiaPurgeVarnishCommands extends DrushCommands {
 
   /**
    * Gets a configuration value from settings.php or config.
-   *
-   * Renamed from getConfigValue to avoid conflict with DrushCommands parent.
    *
    * @param string $name
    *   The configuration key.
@@ -556,7 +728,9 @@ final class AcquiaPurgeVarnishCommands extends DrushCommands {
     }
 
     // Fall back to configuration.
-    return $this->configFactory->get(AcquiaPurgeVarnishForm::SETTINGS)->get($name);
+    return $this->configFactory
+      ->get(AcquiaPurgeVarnishForm::SETTINGS)
+      ->get($name);
   }
 
   /**
@@ -572,7 +746,7 @@ final class AcquiaPurgeVarnishCommands extends DrushCommands {
    * @return array
    *   Array containing [url, options, target_domains].
    */
-  protected function buildPurgeRequest(array $environments, string $currentDomain, string $domainSetting): array {
+  protected function buildPurgeRequest(array $environments, string $currentDomain, string $domainSetting, ?array $customDomains = NULL): array {
     foreach ($environments as $environment) {
       $environmentId = $environment['id'] ?? NULL;
       $domains = $environment['domains'] ?? [];
@@ -581,17 +755,42 @@ final class AcquiaPurgeVarnishCommands extends DrushCommands {
       if (in_array($currentDomain, $domains, TRUE)) {
         // Purge only current domain.
         if ($domainSetting === 'current') {
+          $url = "https://cloud.acquia.com/api/environments/{$environmentId}";
+          $url .= "/domains/{$currentDomain}/actions/clear-caches";
+          return [$url, [], [$currentDomain]];
+        }
+
+        if ($domainSetting === 'custom' && !empty($customDomains)) {
+          // Filter custom domains to only those that exist in this environment.
+          $validDomains = array_intersect($customDomains, $domains);
+
+          // If no valid domains found, fall back to current domain.
+          if (empty($validDomains)) {
+            $url = "https://cloud.acquia.com/api/environments/{$environmentId}";
+            $url .= "/domains/{$currentDomain}/actions/clear-caches";
+            return [$url, [], [$currentDomain]];
+          }
+
+          // Use custom domains list.
+          $url = "https://cloud.acquia.com/api/environments/{$environmentId}";
+          $url .= "/actions/clear-caches";
           return [
-            "https://cloud.acquia.com/api/environments/{$environmentId}/domains/{$currentDomain}/actions/clear-caches",
-            [],
-            [$currentDomain],
+            $url,
+            [
+              'json' => [
+                'domains' => array_values($validDomains),
+              ],
+            ],
+            array_values($validDomains),
           ];
         }
 
         // Purge all domains.
         if ($domainSetting === 'all') {
+          $url = "https://cloud.acquia.com/api/environments/{$environmentId}";
+          $url .= "/actions/clear-caches";
           return [
-            "https://cloud.acquia.com/api/environments/{$environmentId}/actions/clear-caches",
+            $url,
             [
               'json' => [
                 'domains' => $domains,

@@ -5,15 +5,41 @@ acquia_purge_varnish.settings:
     api_key:
       type: string
       label: 'API Key'
+      nullable: true
+      constraints:
+        Length:
+          max: 128
     api_secret:
       type: string
       label: 'API Secret'
+      nullable: true
+      constraints:
+        Length:
+          max: 128
     application_name:
       type: string
       label: 'Application Name'
+      nullable: true
+      constraints:
+        Length:
+          max: 128
     domain:
       type: string
       label: 'Domain selection'
+      constraints:
+        NotBlank: []
+        Choice:
+          choices:
+            - all
+            - current
+            - custom
+    custom_domains:
+      type: sequence
+      label: 'Custom domains list'
+      nullable: true
+      sequence:
+        type: string
+        label: 'Domain'
     log_requests:
       type: boolean
       label: 'Log requests'

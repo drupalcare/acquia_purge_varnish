@@ -21,8 +21,25 @@ use Drupal\Tests\UnitTestCase;
  */
 class AcquiaPurgeVarnishCommandsTest extends UnitTestCase {
 
+  /**
+   * The API client mock.
+   *
+   * @var \Drupal\acquia_purge_varnish\AcquiaPurgeVarnishApiClient
+   */
   protected AcquiaPurgeVarnishApiClient $apiClient;
+
+  /**
+   * The config factory mock.
+   *
+   * @var \Drupal\Core\Config\ConfigFactoryInterface
+   */
   protected ConfigFactoryInterface $configFactory;
+
+  /**
+   * The commands object under test.
+   *
+   * @var \Drupal\acquia_purge_varnish\Commands\AcquiaPurgeVarnishCommands
+   */
   protected AcquiaPurgeVarnishCommands $commands;
 
   /**
