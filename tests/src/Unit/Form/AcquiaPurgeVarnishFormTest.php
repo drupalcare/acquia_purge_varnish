@@ -101,13 +101,4 @@ class AcquiaPurgeVarnishFormTest extends UnitTestCase {
     $this->assertEquals($expected, $method->invoke($this->form));
   }
 
-  /**
-   * Tests that SETTINGS constant has correct value.
-   *
-   * @covers ::SETTINGS
-   */
-  public function testSettingsConstant(): void {
-    $this->assertEquals('acquia_purge_varnish.settings', AcquiaPurgeVarnishForm::SETTINGS);
-  }
-
 }

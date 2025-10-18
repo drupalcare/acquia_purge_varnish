@@ -1,0 +1,20 @@
+{
+  "version": "0.2",
+  "language": "en",
+  "words": [
+    "alaa",
+    "haddad",
+    "flashwebcenter",
+    "alaahaddad",
+    "testapp",
+    "testsite",
+    "devcloud",
+    "livedev"
+  ],
+  "ignorePaths": [
+    "node_modules/**",
+    "vendor/**",
+    "*.min.js",
+    "*.min.css"
+  ]
+}

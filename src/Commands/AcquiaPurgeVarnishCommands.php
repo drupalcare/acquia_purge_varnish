@@ -741,7 +741,9 @@ final class AcquiaPurgeVarnishCommands extends DrushCommands {
    * @param string $currentDomain
    *   The current domain.
    * @param string $domainSetting
-   *   The domain setting ('all' or 'current').
+   *   The domain setting ('all', 'current', or 'custom').
+   * @param array|null $customDomains
+   *   Optional array of custom domains to purge.
    *
    * @return array
    *   Array containing [url, options, target_domains].

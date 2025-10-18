@@ -6,7 +6,6 @@ namespace Drupal\Tests\acquia_purge_varnish\Kernel;
 
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\acquia_purge_varnish\AcquiaPurgeVarnishApiClient;
-use Symfony\Component\HttpFoundation\Request;
 
 /**
  * Integration tests for Acquia Purge Varnish module.
@@ -144,11 +143,11 @@ class AcquiaPurgeVarnishIntegrationTest extends KernelTestBase {
     $config_factory = $this->container->get('config.factory');
     $config = $config_factory->getEditable('acquia_purge_varnish.settings');
 
-  $config->set('log_requests', TRUE);
-  $config->save();
+    $config->set('log_requests', TRUE);
+    $config->save();
 
-  $retrieved = $config_factory->get('acquia_purge_varnish.settings');
-  $this->assertTrue($retrieved->get('log_requests'));
+    $retrieved = $config_factory->get('acquia_purge_varnish.settings');
+    $this->assertTrue($retrieved->get('log_requests'));
   }
 
   /**
