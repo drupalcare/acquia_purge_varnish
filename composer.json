@@ -19,7 +19,7 @@
     ],
     "support": {
         "issues": "https://www.drupal.org/project/issues/acquia_purge_varnish",
-        "source": "https://git.drupalcode.org/project/acquia_purge_varnish",
+        "source": "https://git.drupalcode.org/project/acquia_purge_varnish"
     },
     "require": {
         "php": ">=8.1",
