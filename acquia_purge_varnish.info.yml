@@ -1,7 +1,8 @@
 name: 'Acquia Purge Varnish'
 type: module
-description: 'Allow customers on Acquia to purge varnish for the current environment.'
+description: 'Varnish cache purging integration for Acquia Cloud environments with environment-specific controls.'
+package: 'Performance'
 core_version_requirement: ^10 || ^11
-package: 'Acquia'
+php: ^8.1
 
 configure: acquia_purge_varnish.form

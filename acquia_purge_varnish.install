@@ -1,11 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * @file
  * Install, update and uninstall functions for the Acquia Purge Varnish module.
  */
 
-declare(strict_types=1);
 
 use Drupal\Core\Url;
 
