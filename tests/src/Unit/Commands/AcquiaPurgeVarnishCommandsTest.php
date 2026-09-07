@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\Tests\acquia_purge_varnish\Unit\Commands;
 
+use PHPUnit\Framework\Attributes\Group;
 use Drupal\acquia_purge_varnish\AcquiaPurgeVarnishApiClient;
 use Drupal\acquia_purge_varnish\Commands\AcquiaPurgeVarnishCommands;
 use Drupal\Core\Config\ConfigFactoryInterface;
@@ -19,6 +20,7 @@ use Drupal\Tests\UnitTestCase;
  * @group acquia_purge_varnish
  * @coversDefaultClass \Drupal\acquia_purge_varnish\Commands\AcquiaPurgeVarnishCommands
  */
+#[Group('acquia_purge_varnish')]
 class AcquiaPurgeVarnishCommandsTest extends UnitTestCase {
 
   /**
@@ -69,7 +71,6 @@ class AcquiaPurgeVarnishCommandsTest extends UnitTestCase {
 
     $reflection = new \ReflectionClass($this->commands);
     $method = $reflection->getMethod('getCredentials');
-    $method->setAccessible(TRUE);
     $result = $method->invoke($this->commands);
 
     $this->assertIsArray($result);
@@ -95,7 +96,6 @@ class AcquiaPurgeVarnishCommandsTest extends UnitTestCase {
 
     $reflection = new \ReflectionClass($this->commands);
     $method = $reflection->getMethod('getCredentials');
-    $method->setAccessible(TRUE);
     $result = $method->invoke($this->commands);
 
     $this->assertNull($result);
@@ -113,7 +113,6 @@ class AcquiaPurgeVarnishCommandsTest extends UnitTestCase {
 
     $reflection = new \ReflectionClass($this->commands);
     $method = $reflection->getMethod('buildPurgeRequest');
-    $method->setAccessible(TRUE);
     [$url, $options, $domains] = $method->invoke($this->commands, $environments, 'example.com', 'current');
 
     $this->assertStringContainsString('env-123', $url);
@@ -134,7 +133,6 @@ class AcquiaPurgeVarnishCommandsTest extends UnitTestCase {
 
     $reflection = new \ReflectionClass($this->commands);
     $method = $reflection->getMethod('buildPurgeRequest');
-    $method->setAccessible(TRUE);
     [$url, $options, $domains] = $method->invoke($this->commands, $environments, 'example.com', 'all');
 
     $this->assertStringContainsString('env-456', $url);
@@ -155,7 +153,6 @@ class AcquiaPurgeVarnishCommandsTest extends UnitTestCase {
 
     $reflection = new \ReflectionClass($this->commands);
     $method = $reflection->getMethod('getAcquiaConfigValue');
-    $method->setAccessible(TRUE);
     $result = $method->invoke($this->commands, 'domain');
 
     $this->assertEquals('all', $result);

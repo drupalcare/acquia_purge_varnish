@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\Tests\acquia_purge_varnish\Unit;
 
+use PHPUnit\Framework\Attributes\Group;
 use Drupal\acquia_purge_varnish\AcquiaPurgeVarnishApiClient;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Logger\LoggerChannelInterface;
@@ -11,7 +12,6 @@ use Drupal\Tests\UnitTestCase;
 use GuzzleHttp\ClientInterface;
 use Symfony\Component\HttpFoundation\Request as SymfonyRequest;
 use Symfony\Component\HttpFoundation\RequestStack;
-use Symfony\Component\HttpFoundation\ServerBag;
 
 /**
  * Tests the Acquia Purge Varnish API Client service.
@@ -19,6 +19,7 @@ use Symfony\Component\HttpFoundation\ServerBag;
  * @group acquia_purge_varnish
  * @coversDefaultClass \Drupal\acquia_purge_varnish\AcquiaPurgeVarnishApiClient
  */
+#[Group('acquia_purge_varnish')]
 class AcquiaPurgeVarnishApiClientTest extends UnitTestCase {
 
   /**
@@ -81,14 +82,13 @@ class AcquiaPurgeVarnishApiClientTest extends UnitTestCase {
    * @covers ::getAcquiaEnvironment
    */
   public function testGetAcquiaEnvironment(): void {
-    $request = $this->createMock(SymfonyRequest::class);
-    $serverBag = $this->createMock(ServerBag::class);
-
-    $request->server = $serverBag;
-    $serverBag->expects($this->once())
-      ->method('get')
-      ->with('AH_SITE_ENVIRONMENT')
-      ->willReturn('prod');
+    // A REAL Request, not a mock with its ->server swapped out. That older
+    // shape stopped working: Symfony's Request::$server is not a property a
+    // test can reassign on a mock any more, so the mocked ServerBag was
+    // never consulted and every one of these assertions read NULL. A real
+    // Request constructed with server parameters exercises the same code
+    // path and cannot drift out of step with Symfony again.
+    $request = new SymfonyRequest([], [], [], [], [], ['AH_SITE_ENVIRONMENT' => 'prod']);
 
     $this->requestStack->expects($this->once())
       ->method('getCurrentRequest')
@@ -118,14 +118,13 @@ class AcquiaPurgeVarnishApiClientTest extends UnitTestCase {
    * @covers ::getAcquiaSiteGroup
    */
   public function testGetAcquiaSiteGroup(): void {
-    $request = $this->createMock(SymfonyRequest::class);
-    $serverBag = $this->createMock(ServerBag::class);
-
-    $request->server = $serverBag;
-    $serverBag->expects($this->once())
-      ->method('get')
-      ->with('AH_SITE_GROUP')
-      ->willReturn('mysite');
+    // A REAL Request, not a mock with its ->server swapped out. That older
+    // shape stopped working: Symfony's Request::$server is not a property a
+    // test can reassign on a mock any more, so the mocked ServerBag was
+    // never consulted and every one of these assertions read NULL. A real
+    // Request constructed with server parameters exercises the same code
+    // path and cannot drift out of step with Symfony again.
+    $request = new SymfonyRequest([], [], [], [], [], ['AH_SITE_GROUP' => 'mysite']);
 
     $this->requestStack->expects($this->once())
       ->method('getCurrentRequest')
@@ -155,14 +154,13 @@ class AcquiaPurgeVarnishApiClientTest extends UnitTestCase {
    * @covers ::getCurrentHost
    */
   public function testGetCurrentHost(): void {
-    $request = $this->createMock(SymfonyRequest::class);
-    $serverBag = $this->createMock(ServerBag::class);
-
-    $request->server = $serverBag;
-    $serverBag->expects($this->once())
-      ->method('get')
-      ->with('HTTP_HOST')
-      ->willReturn('example.com');
+    // A REAL Request, not a mock with its ->server swapped out. That older
+    // shape stopped working: Symfony's Request::$server is not a property a
+    // test can reassign on a mock any more, so the mocked ServerBag was
+    // never consulted and every one of these assertions read NULL. A real
+    // Request constructed with server parameters exercises the same code
+    // path and cannot drift out of step with Symfony again.
+    $request = new SymfonyRequest([], [], [], [], [], ['HTTP_HOST' => 'example.com']);
 
     $this->requestStack->expects($this->once())
       ->method('getCurrentRequest')
@@ -192,14 +190,13 @@ class AcquiaPurgeVarnishApiClientTest extends UnitTestCase {
    * @covers ::isAcquiaEnvironment
    */
   public function testIsAcquiaEnvironment(): void {
-    $request = $this->createMock(SymfonyRequest::class);
-    $serverBag = $this->createMock(ServerBag::class);
-
-    $request->server = $serverBag;
-    $serverBag->expects($this->once())
-      ->method('get')
-      ->with('AH_SITE_ENVIRONMENT')
-      ->willReturn('prod');
+    // A REAL Request, not a mock with its ->server swapped out. That older
+    // shape stopped working: Symfony's Request::$server is not a property a
+    // test can reassign on a mock any more, so the mocked ServerBag was
+    // never consulted and every one of these assertions read NULL. A real
+    // Request constructed with server parameters exercises the same code
+    // path and cannot drift out of step with Symfony again.
+    $request = new SymfonyRequest([], [], [], [], [], ['AH_SITE_ENVIRONMENT' => 'prod']);
 
     $this->requestStack->expects($this->once())
       ->method('getCurrentRequest')
@@ -214,14 +211,13 @@ class AcquiaPurgeVarnishApiClientTest extends UnitTestCase {
    * @covers ::isAcquiaEnvironment
    */
   public function testIsNotAcquiaEnvironment(): void {
-    $request = $this->createMock(SymfonyRequest::class);
-    $serverBag = $this->createMock(ServerBag::class);
-
-    $request->server = $serverBag;
-    $serverBag->expects($this->once())
-      ->method('get')
-      ->with('AH_SITE_ENVIRONMENT')
-      ->willReturn(NULL);
+    // A REAL Request, not a mock with its ->server swapped out. That older
+    // shape stopped working: Symfony's Request::$server is not a property a
+    // test can reassign on a mock any more, so the mocked ServerBag was
+    // never consulted and every one of these assertions read NULL. A real
+    // Request constructed with server parameters exercises the same code
+    // path and cannot drift out of step with Symfony again.
+    $request = new SymfonyRequest([], [], [], [], [], ['AH_SITE_ENVIRONMENT' => NULL]);
 
     $this->requestStack->expects($this->once())
       ->method('getCurrentRequest')

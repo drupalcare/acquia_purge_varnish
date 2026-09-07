@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\Tests\acquia_purge_varnish\Unit\Form;
 
+use PHPUnit\Framework\Attributes\Group;
 use Drupal\acquia_purge_varnish\AcquiaPurgeVarnishApiClient;
 use Drupal\acquia_purge_varnish\Form\AcquiaPurgeVarnishForm;
 use Drupal\Core\Config\ConfigFactoryInterface;
@@ -20,6 +21,7 @@ use Drupal\Tests\UnitTestCase;
  * @group acquia_purge_varnish
  * @coversDefaultClass \Drupal\acquia_purge_varnish\Form\AcquiaPurgeVarnishForm
  */
+#[Group('acquia_purge_varnish')]
 class AcquiaPurgeVarnishFormTest extends UnitTestCase {
 
   /**
@@ -95,7 +97,6 @@ class AcquiaPurgeVarnishFormTest extends UnitTestCase {
   public function testGetEditableConfigNames(): void {
     $reflection = new \ReflectionClass($this->form);
     $method = $reflection->getMethod('getEditableConfigNames');
-    $method->setAccessible(TRUE);
 
     $expected = ['acquia_purge_varnish.settings'];
     $this->assertEquals($expected, $method->invoke($this->form));

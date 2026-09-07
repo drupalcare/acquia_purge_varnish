@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\Tests\acquia_purge_varnish\Unit\Controller;
 
+use PHPUnit\Framework\Attributes\Group;
 use Drupal\acquia_purge_varnish\AcquiaPurgeVarnishApiClient;
 use Drupal\acquia_purge_varnish\Controller\AcquiaPurgeVarnishController;
 use Drupal\Core\Config\ConfigFactoryInterface;
@@ -14,7 +15,6 @@ use Drupal\Tests\UnitTestCase;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
-use Symfony\Component\HttpFoundation\ServerBag;
 
 /**
  * Tests the Acquia Purge Varnish Controller.
@@ -22,6 +22,7 @@ use Symfony\Component\HttpFoundation\ServerBag;
  * @group acquia_purge_varnish
  * @coversDefaultClass \Drupal\acquia_purge_varnish\Controller\AcquiaPurgeVarnishController
  */
+#[Group('acquia_purge_varnish')]
 class AcquiaPurgeVarnishControllerTest extends UnitTestCase {
 
   /**
@@ -83,10 +84,18 @@ class AcquiaPurgeVarnishControllerTest extends UnitTestCase {
    * @covers ::purgeVarnish
    */
   public function testPurgeVarnishReturnsRedirect(): void {
-    $request = $this->createMock(Request::class);
-    $serverBag = $this->createMock(ServerBag::class);
-    $request->server = $serverBag;
-    $serverBag->method('get')->with('HTTP_REFERER')->willReturn('https://example.com/previous-page');
+    // A REAL Request, not a mock with its ->server reassigned. That older
+    // shape stopped working — Symfony's Request::$server is no longer a
+    // property a test can swap on a mock — so the mocked ServerBag was never
+    // consulted, HTTP_REFERER read as NULL, and the controller fell through
+    // to its Url::fromRoute() branch, which needs a container this unit test
+    // does not have. The visible symptom was ContainerNotInitializedException,
+    // three layers away from the actual cause.
+    $request = new Request([], [], [], [], [], [
+      'HTTP_REFERER' => 'https://example.com/previous-page',
+      'HTTP_HOST' => 'example.com',
+      'HTTPS' => 'on',
+    ]);
 
     $this->requestStack->method('getCurrentRequest')->willReturn($request);
     $this->apiClient->expects($this->once())->method('isAcquiaEnvironment')->willReturn(FALSE);
@@ -109,10 +118,18 @@ class AcquiaPurgeVarnishControllerTest extends UnitTestCase {
     $this->apiClient->expects($this->once())->method('getCurrentHost')->willReturn('localhost');
     $this->messenger->expects($this->once())->method('addError');
 
-    $request = $this->createMock(Request::class);
-    $serverBag = $this->createMock(ServerBag::class);
-    $request->server = $serverBag;
-    $serverBag->method('get')->willReturn('https://example.com');
+    // A REAL Request, not a mock with its ->server reassigned. That older
+    // shape stopped working — Symfony's Request::$server is no longer a
+    // property a test can swap on a mock — so the mocked ServerBag was never
+    // consulted, HTTP_REFERER read as NULL, and the controller fell through
+    // to its Url::fromRoute() branch, which needs a container this unit test
+    // does not have. The visible symptom was ContainerNotInitializedException,
+    // three layers away from the actual cause.
+    $request = new Request([], [], [], [], [], [
+      'HTTP_REFERER' => 'https://example.com',
+      'HTTP_HOST' => 'example.com',
+      'HTTPS' => 'on',
+    ]);
     $this->requestStack->method('getCurrentRequest')->willReturn($request);
 
     $response = $this->controller->purgeVarnish();
@@ -135,10 +152,18 @@ class AcquiaPurgeVarnishControllerTest extends UnitTestCase {
 
     $this->messenger->expects($this->once())->method('addError');
 
-    $request = $this->createMock(Request::class);
-    $serverBag = $this->createMock(ServerBag::class);
-    $request->server = $serverBag;
-    $serverBag->method('get')->willReturn('https://example.com');
+    // A REAL Request, not a mock with its ->server reassigned. That older
+    // shape stopped working — Symfony's Request::$server is no longer a
+    // property a test can swap on a mock — so the mocked ServerBag was never
+    // consulted, HTTP_REFERER read as NULL, and the controller fell through
+    // to its Url::fromRoute() branch, which needs a container this unit test
+    // does not have. The visible symptom was ContainerNotInitializedException,
+    // three layers away from the actual cause.
+    $request = new Request([], [], [], [], [], [
+      'HTTP_REFERER' => 'https://example.com',
+      'HTTP_HOST' => 'example.com',
+      'HTTPS' => 'on',
+    ]);
     $this->requestStack->method('getCurrentRequest')->willReturn($request);
 
     $this->controller->purgeVarnish();
@@ -163,7 +188,6 @@ class AcquiaPurgeVarnishControllerTest extends UnitTestCase {
 
     $reflection = new \ReflectionClass($this->controller);
     $method = $reflection->getMethod('getConfigValue');
-    $method->setAccessible(TRUE);
 
     $result = $method->invoke($this->controller, 'api_key');
     $this->assertEquals('test-key', $result);
@@ -189,7 +213,6 @@ class AcquiaPurgeVarnishControllerTest extends UnitTestCase {
 
     $reflection = new \ReflectionClass($this->controller);
     $method = $reflection->getMethod('getUuidAndDomains');
-    $method->setAccessible(TRUE);
 
     [$url, $options] = $method->invoke($this->controller, $environments, 'example.com');
 
@@ -219,7 +242,6 @@ class AcquiaPurgeVarnishControllerTest extends UnitTestCase {
 
     $reflection = new \ReflectionClass($this->controller);
     $method = $reflection->getMethod('getUuidAndDomains');
-    $method->setAccessible(TRUE);
 
     [$url, $options] = $method->invoke($this->controller, $environments, 'example.com');
 
@@ -250,7 +272,6 @@ class AcquiaPurgeVarnishControllerTest extends UnitTestCase {
 
     $reflection = new \ReflectionClass($this->controller);
     $method = $reflection->getMethod('getUuidAndDomains');
-    $method->setAccessible(TRUE);
 
     [$url, $options] = $method->invoke($this->controller, $environments, 'notfound.example.com');
 

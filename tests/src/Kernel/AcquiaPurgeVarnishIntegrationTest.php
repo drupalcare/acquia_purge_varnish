@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Drupal\Tests\acquia_purge_varnish\Kernel;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\acquia_purge_varnish\AcquiaPurgeVarnishApiClient;
 
@@ -12,6 +14,8 @@ use Drupal\acquia_purge_varnish\AcquiaPurgeVarnishApiClient;
  *
  * @group acquia_purge_varnish
  */
+#[Group('acquia_purge_varnish')]
+#[RunTestsInSeparateProcesses]
 class AcquiaPurgeVarnishIntegrationTest extends KernelTestBase {
 
   /**
