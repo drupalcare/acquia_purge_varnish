@@ -1,7 +1,7 @@
 name: 'Acquia Purge Varnish Test'
 type: module
 description: 'Mock Acquia environment for local testing. DO NOT enable on production.'
-core_version_requirement: ^10 || ^11
+core_version_requirement: ^10 || ^11 || ^12
 package: 'Development'
 
 dependencies:
