@@ -22,3 +22,7 @@ services:
       - '@request_stack'
       - '@acquia_purge_varnish.api_client'
       - '@messenger'
+
+  Drupal\acquia_purge_varnish\Hook\AcquiaPurgeVarnishHooks:
+    class: Drupal\acquia_purge_varnish\Hook\AcquiaPurgeVarnishHooks
+    autowire: true

@@ -2,6 +2,7 @@
 
 /**
  * @file
+ * PHPUnit bootstrap for the Acquia Purge Varnish test suite.
  */
 
 declare(strict_types=1);
