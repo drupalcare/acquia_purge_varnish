@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\Tests\acquia_purge_varnish\Unit\Controller;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 use Drupal\acquia_purge_varnish\AcquiaPurgeVarnishApiClient;
 use Drupal\acquia_purge_varnish\Controller\AcquiaPurgeVarnishController;
@@ -22,6 +23,7 @@ use Symfony\Component\HttpFoundation\RequestStack;
  * @group acquia_purge_varnish
  * @coversDefaultClass \Drupal\acquia_purge_varnish\Controller\AcquiaPurgeVarnishController
  */
+#[CoversClass(\Drupal\acquia_purge_varnish\Controller\AcquiaPurgeVarnishController::class)]
 #[Group('acquia_purge_varnish')]
 class AcquiaPurgeVarnishControllerTest extends UnitTestCase {
 

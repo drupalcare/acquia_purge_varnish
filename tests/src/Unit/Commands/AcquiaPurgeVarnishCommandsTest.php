@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\Tests\acquia_purge_varnish\Unit\Commands;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 use Drupal\acquia_purge_varnish\AcquiaPurgeVarnishApiClient;
 use Drupal\acquia_purge_varnish\Commands\AcquiaPurgeVarnishCommands;
@@ -20,6 +21,7 @@ use Drupal\Tests\UnitTestCase;
  * @group acquia_purge_varnish
  * @coversDefaultClass \Drupal\acquia_purge_varnish\Commands\AcquiaPurgeVarnishCommands
  */
+#[CoversClass(\Drupal\acquia_purge_varnish\Commands\AcquiaPurgeVarnishCommands::class)]
 #[Group('acquia_purge_varnish')]
 class AcquiaPurgeVarnishCommandsTest extends UnitTestCase {
 
