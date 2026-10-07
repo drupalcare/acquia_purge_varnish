@@ -72,6 +72,22 @@ function acquia_purge_varnish_uninstall(): void {
  * They return the same keys, so the later simply overwrites the earlier — core
  * documents that overlap as expected behaviour.
  *
+ * THE INSTALL PHASE CANNOT AUTOLOAD THIS MODULE'S OWN CLASSES. On Drupal 10
+ * and 11.0-11.2, core (and Drush's pm:install validation) call this function
+ * for a module that is not installed yet, so `Drupal\acquia_purge_varnish\` is
+ * not registered with the class loader. Measured 2026-10-06 on 10.6.18:
+ *
+ *   Class "Drupal\acquia_purge_varnish\Hook\
+ *   AcquiaPurgeVarnishRequirementsHooks" not found in
+ *   acquia_purge_varnish_requirements()
+ *
+ * and the module could not be installed at all. Core's
+ * InstallRequirementsInterface gives the remedy: "if you need to load a class
+ * from your module, you'll need to include the class file directly." That is
+ * what the require_once below does, so the rows still have one home. Kernel
+ * tests never saw it because tests/bootstrap.php registers every module's
+ * namespace; InstallRequirementsAutoloadTest removes it to reproduce install.
+ *
  * @param string $phase
  *   The phase: 'install' or 'runtime'.
  *
@@ -80,6 +96,10 @@ function acquia_purge_varnish_uninstall(): void {
  */
 #[LegacyRequirementsHook]
 function acquia_purge_varnish_requirements(string $phase): array {
+  if (!class_exists(AcquiaPurgeVarnishRequirementsHooks::class)) {
+    require_once __DIR__ . '/src/Hook/AcquiaPurgeVarnishRequirementsHooks.php';
+  }
+
   if ($phase === 'install') {
     return AcquiaPurgeVarnishRequirementsHooks::oauthRow();
   }
