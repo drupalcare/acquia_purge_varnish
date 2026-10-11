@@ -51,8 +51,8 @@ class AcquiaPurgeVarnishCommandsTest extends UnitTestCase {
    */
   protected function setUp(): void {
     parent::setUp();
-    $this->apiClient = $this->createMock(AcquiaPurgeVarnishApiClient::class);
-    $this->configFactory = $this->createMock(ConfigFactoryInterface::class);
+    $this->apiClient = $this->createStub(AcquiaPurgeVarnishApiClient::class);
+    $this->configFactory = $this->createStub(ConfigFactoryInterface::class);
     $this->commands = new AcquiaPurgeVarnishCommands($this->apiClient, $this->configFactory);
   }
 
@@ -62,7 +62,7 @@ class AcquiaPurgeVarnishCommandsTest extends UnitTestCase {
    * @covers ::getCredentials
    */
   public function testGetCredentialsSuccess(): void {
-    $config = $this->createMock(ImmutableConfig::class);
+    $config = $this->createStub(ImmutableConfig::class);
     $config->method('get')->willReturnMap([
       ['api_key', 'test-key'],
       ['api_secret', 'test-secret'],
@@ -88,7 +88,7 @@ class AcquiaPurgeVarnishCommandsTest extends UnitTestCase {
    * @covers ::getCredentials
    */
   public function testGetCredentialsMissingApiKey(): void {
-    $config = $this->createMock(ImmutableConfig::class);
+    $config = $this->createStub(ImmutableConfig::class);
     $config->method('get')->willReturnMap([
       ['api_key', NULL],
       ['api_secret', 'test-secret'],
@@ -151,11 +151,15 @@ class AcquiaPurgeVarnishCommandsTest extends UnitTestCase {
   public function testGetAcquiaConfigValue(): void {
     $config = $this->createMock(ImmutableConfig::class);
     $config->expects($this->once())->method('get')->with('domain')->willReturn('all');
-    $this->configFactory->expects($this->once())->method('get')->willReturn($config);
+    // This test asserts the factory call, so it needs its own mock; setUp()
+    // shares a stub with the tests that only read configuration.
+    $configFactory = $this->createMock(ConfigFactoryInterface::class);
+    $configFactory->expects($this->once())->method('get')->willReturn($config);
+    $commands = new AcquiaPurgeVarnishCommands($this->apiClient, $configFactory);
 
-    $reflection = new \ReflectionClass($this->commands);
+    $reflection = new \ReflectionClass($commands);
     $method = $reflection->getMethod('getAcquiaConfigValue');
-    $result = $method->invoke($this->commands, 'domain');
+    $result = $method->invoke($commands, 'domain');
 
     $this->assertEquals('all', $result);
   }

@@ -67,10 +67,10 @@ class AcquiaPurgeVarnishFormTest extends UnitTestCase {
   protected function setUp(): void {
     parent::setUp();
 
-    $this->configFactory = $this->createMock(ConfigFactoryInterface::class);
-    $this->typedConfigManager = $this->createMock(TypedConfigManagerInterface::class);
-    $this->logger = $this->createMock(LoggerChannelInterface::class);
-    $this->apiClient = $this->createMock(AcquiaPurgeVarnishApiClient::class);
+    $this->configFactory = $this->createStub(ConfigFactoryInterface::class);
+    $this->typedConfigManager = $this->createStub(TypedConfigManagerInterface::class);
+    $this->logger = $this->createStub(LoggerChannelInterface::class);
+    $this->apiClient = $this->createStub(AcquiaPurgeVarnishApiClient::class);
 
     $this->form = new AcquiaPurgeVarnishForm(
       $this->configFactory,

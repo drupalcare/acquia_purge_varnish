@@ -63,12 +63,21 @@ class AcquiaPurgeVarnishControllerTest extends UnitTestCase {
   protected function setUp(): void {
     parent::setUp();
 
-    $this->configFactory = $this->createMock(ConfigFactoryInterface::class);
-    $this->logger = $this->createMock(LoggerChannelInterface::class);
-    $this->requestStack = $this->createMock(RequestStack::class);
-    $this->apiClient = $this->createMock(AcquiaPurgeVarnishApiClient::class);
-    $this->messenger = $this->createMock(MessengerInterface::class);
+    // Stubs by default. A test that asserts calls on a collaborator swaps in
+    // a mock for it and calls buildController() again.
+    $this->configFactory = $this->createStub(ConfigFactoryInterface::class);
+    $this->logger = $this->createStub(LoggerChannelInterface::class);
+    $this->requestStack = $this->createStub(RequestStack::class);
+    $this->apiClient = $this->createStub(AcquiaPurgeVarnishApiClient::class);
+    $this->messenger = $this->createStub(MessengerInterface::class);
 
+    $this->buildController();
+  }
+
+  /**
+   * Builds the controller under test from the current collaborators.
+   */
+  private function buildController(): void {
     $this->controller = new AcquiaPurgeVarnishController(
       $this->configFactory,
       $this->logger,
@@ -99,6 +108,10 @@ class AcquiaPurgeVarnishControllerTest extends UnitTestCase {
       'HTTPS' => 'on',
     ]);
 
+    $this->apiClient = $this->createMock(AcquiaPurgeVarnishApiClient::class);
+    $this->messenger = $this->createMock(MessengerInterface::class);
+    $this->buildController();
+
     $this->requestStack->method('getCurrentRequest')->willReturn($request);
     $this->apiClient->expects($this->once())->method('isAcquiaEnvironment')->willReturn(FALSE);
     $this->apiClient->method('getCurrentHost')->willReturn('localhost');
@@ -116,6 +129,10 @@ class AcquiaPurgeVarnishControllerTest extends UnitTestCase {
    * @covers ::purgeAcquiaVarnishCache
    */
   public function testPurgeFailsWhenNotOnAcquia(): void {
+    $this->apiClient = $this->createMock(AcquiaPurgeVarnishApiClient::class);
+    $this->messenger = $this->createMock(MessengerInterface::class);
+    $this->buildController();
+
     $this->apiClient->expects($this->once())->method('isAcquiaEnvironment')->willReturn(FALSE);
     $this->apiClient->expects($this->once())->method('getCurrentHost')->willReturn('localhost');
     $this->messenger->expects($this->once())->method('addError');
@@ -145,10 +162,13 @@ class AcquiaPurgeVarnishControllerTest extends UnitTestCase {
    * @covers ::getConfigValue
    */
   public function testPurgeFailsWhenCredentialsMissing(): void {
+    $this->messenger = $this->createMock(MessengerInterface::class);
+    $this->buildController();
+
     $this->apiClient->method('isAcquiaEnvironment')->willReturn(TRUE);
     $this->apiClient->method('getCurrentHost')->willReturn('example.com');
 
-    $config = $this->createMock(ImmutableConfig::class);
+    $config = $this->createStub(ImmutableConfig::class);
     $config->method('get')->willReturn(NULL);
     $this->configFactory->method('get')->willReturn($config);
 
@@ -177,6 +197,9 @@ class AcquiaPurgeVarnishControllerTest extends UnitTestCase {
    * @covers ::getConfigValue
    */
   public function testGetConfigValue(): void {
+    $this->configFactory = $this->createMock(ConfigFactoryInterface::class);
+    $this->buildController();
+
     $config = $this->createMock(ImmutableConfig::class);
     $config->expects($this->once())
       ->method('get')
@@ -268,7 +291,7 @@ class AcquiaPurgeVarnishControllerTest extends UnitTestCase {
       ],
     ];
 
-    $config = $this->createMock(ImmutableConfig::class);
+    $config = $this->createStub(ImmutableConfig::class);
     $config->method('get')->willReturn('current');
     $this->configFactory->method('get')->willReturn($config);
 

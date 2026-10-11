@@ -65,9 +65,9 @@ class AcquiaPurgeVarnishApiClientTest extends UnitTestCase {
   protected function setUp(): void {
     parent::setUp();
 
-    $this->httpClient = $this->createMock(ClientInterface::class);
-    $this->logger = $this->createMock(LoggerChannelInterface::class);
-    $this->configFactory = $this->createMock(ConfigFactoryInterface::class);
+    $this->httpClient = $this->createStub(ClientInterface::class);
+    $this->logger = $this->createStub(LoggerChannelInterface::class);
+    $this->configFactory = $this->createStub(ConfigFactoryInterface::class);
     $this->requestStack = $this->createMock(RequestStack::class);
 
     $this->apiClient = new AcquiaPurgeVarnishApiClient(
