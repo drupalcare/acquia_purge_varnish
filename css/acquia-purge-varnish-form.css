@@ -1,0 +1,343 @@
+/**
+ * Acquia Purge Varnish settings form. Layout is forced here; surfaces, text,
+ * inputs and buttons come from the admin theme (inherit / currentColor).
+ * The accent blue appears only as a thin border or an icon colour. It is our
+ * own mid-tone, not an Acquia brand value.
+ */
+.acquia-purge-varnish-form {
+  --apv-accent: #3b82c4;
+  --apv-line: color-mix(in srgb, currentColor 18%, transparent);
+  --apv-radius: 0.5rem;
+  box-sizing: border-box;
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 28rem), 1fr));
+  align-items: start;
+  max-inline-size: 72rem;
+}
+
+.acquia-purge-varnish-form *,
+.acquia-purge-varnish-form *::before,
+.acquia-purge-varnish-form *::after {
+  box-sizing: border-box;
+}
+
+/* Full-width rows. */
+.acquia-purge-varnish-form > .apv-band,
+.acquia-purge-varnish-form > .apv-nav,
+.acquia-purge-varnish-form > [data-drupal-selector="edit-actions"],
+.acquia-purge-varnish-form > .form-actions {
+  grid-column: 1 / -1;
+}
+
+.acquia-purge-varnish-form .form-item {
+  margin-block: 0 1rem;
+}
+
+.acquia-purge-varnish-form .form-item,
+.acquia-purge-varnish-form .form-wrapper {
+  min-inline-size: 0;
+}
+
+.acquia-purge-varnish-form .description,
+.acquia-purge-varnish-form .form-item__description,
+.acquia-purge-varnish-form .fieldset__description,
+.acquia-purge-varnish-form .fieldset-description {
+  inline-size: 100%;
+  max-inline-size: none;
+  margin-block: 0.25rem 0;
+  opacity: 0.8;
+}
+
+/* Band: bordered, theme colours, accent rule on the start edge. */
+.acquia-purge-varnish-form .apv-band {
+  display: grid;
+  gap: 0.5rem;
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--apv-line);
+  border-inline-start: 4px solid var(--apv-accent);
+  border-radius: var(--apv-radius);
+}
+
+.acquia-purge-varnish-form .apv-band__name {
+  margin: 0;
+  font-size: 1.375rem;
+  font-weight: 650;
+  line-height: 1.2;
+}
+
+.acquia-purge-varnish-form .apv-band__purpose {
+  margin: 0;
+  opacity: 0.8;
+}
+
+.acquia-purge-varnish-form .apv-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0.25rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.acquia-purge-varnish-form .apv-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.125rem 0.625rem;
+  border: 1px solid var(--apv-line);
+  border-radius: 999px;
+  font-size: 0.8125rem;
+}
+
+.acquia-purge-varnish-form .apv-chip::before {
+  content: "";
+  flex: none;
+  inline-size: 0.9375rem;
+  block-size: 0.9375rem;
+  background-color: var(--apv-accent);
+  mask: url("../images/icons/dns.svg") center / contain no-repeat;
+}
+
+.acquia-purge-varnish-form .apv-chip--credentials::before {
+  mask-image: url("../images/icons/key.svg");
+}
+
+.acquia-purge-varnish-form .apv-chip--locked::before {
+  mask-image: url("../images/icons/lock.svg");
+}
+
+/* Nav: the two existing menu links. */
+.acquia-purge-varnish-form .apv-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.25rem;
+  margin: 0;
+  padding: 0 0.25rem;
+  border-block-end: 1px solid var(--apv-line);
+  list-style: none;
+}
+
+.acquia-purge-varnish-form .apv-nav a {
+  display: inline-block;
+  padding-block: 0.5rem;
+  border-block-end: 3px solid transparent;
+  text-decoration: none;
+}
+
+.acquia-purge-varnish-form .apv-nav a[aria-current="page"] {
+  border-block-end-color: var(--apv-accent);
+  font-weight: 650;
+}
+
+/* Sections. */
+.acquia-purge-varnish-form fieldset.apv-section {
+  min-inline-size: 0;
+  margin: 0;
+  padding: 1.25rem;
+  border: 1px solid var(--apv-line);
+  border-inline-start: 4px solid var(--apv-accent);
+  border-radius: var(--apv-radius);
+  box-shadow: none;
+}
+
+.acquia-purge-varnish-form fieldset.apv-section > legend {
+  float: none;
+  padding: 0 0.5rem;
+  font-size: 1.0625rem;
+  font-weight: 650;
+}
+
+.acquia-purge-varnish-form .apv-step {
+  display: inline-grid;
+  place-items: center;
+  inline-size: 1.5rem;
+  block-size: 1.5rem;
+  margin-inline-end: 0.5rem;
+  border: 2px solid var(--apv-accent);
+  border-radius: 50%;
+  font-size: 0.8125rem;
+  font-weight: 650;
+  line-height: 1;
+}
+
+/* Credentials: key and secret share a row when there is room. */
+.acquia-purge-varnish-form .apv-section--credentials :is(.fieldset__wrapper, .fieldset-wrapper) {
+  display: grid;
+  gap: 0 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+}
+
+.acquia-purge-varnish-form .apv-section--credentials :is(.fieldset__wrapper, .fieldset-wrapper) > :not(.form-item-api-key, .form-item-api-secret) {
+  grid-column: 1 / -1;
+}
+
+.acquia-purge-varnish-form :is(input[type="text"], textarea) {
+  inline-size: 100%;
+  max-inline-size: none;
+}
+
+.acquia-purge-varnish-form :is(input[name="api_key"], input[name="api_secret"], textarea) {
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+
+/* Locked (set in settings.php) row. */
+.acquia-purge-varnish-form .apv-locked {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0.75rem;
+  border: 1px dashed var(--apv-line);
+  border-inline-start: 3px solid var(--apv-accent);
+  border-radius: var(--apv-radius);
+}
+
+.acquia-purge-varnish-form .apv-locked::before {
+  content: "";
+  flex: none;
+  inline-size: 1rem;
+  block-size: 1rem;
+  background-color: var(--apv-accent);
+  mask: url("../images/icons/lock.svg") center / contain no-repeat;
+}
+
+/* Choice cards: the domain radios. */
+.acquia-purge-varnish-form .apv-choices {
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+}
+
+.acquia-purge-varnish-form .apv-choices .form-type-radio,
+.acquia-purge-varnish-form .apv-choices .form-type--radio {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid var(--apv-line);
+  border-radius: var(--apv-radius);
+}
+
+.acquia-purge-varnish-form .apv-choices .form-type-radio:has(input:checked),
+.acquia-purge-varnish-form .apv-choices .form-type--radio:has(input:checked) {
+  border-color: currentColor;
+  border-inline-start: 4px solid var(--apv-accent);
+}
+
+.acquia-purge-varnish-form .apv-choices label {
+  margin: 0;
+  cursor: pointer;
+}
+
+/* The question sits above the cards, full width, never in a side column. */
+.acquia-purge-varnish-form fieldset.apv-section fieldset:has(.apv-choices) {
+  display: block;
+  min-inline-size: 0;
+  inline-size: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.acquia-purge-varnish-form fieldset.apv-section fieldset:has(.apv-choices) > legend {
+  display: block;
+  float: none;
+  inline-size: 100%;
+  margin: 0 0 0.5rem;
+  padding: 0;
+}
+
+.acquia-purge-varnish-form fieldset:has(.apv-choices) :is(.fieldset__wrapper, .fieldset-wrapper) {
+  margin: 0;
+  padding: 0;
+}
+
+/* Card: control in a fixed first column, text beside it. Claro offsets the
+   boolean item and its input (claro/css/components/form--checkbox-radio.css:17-31:
+   margin-inline-start, position relative, inset-block-start, float, negative
+   margin, translate), which put the control on its own line above the text. */
+.acquia-purge-varnish-form .apv-choices :is(.form-type-radio, .form-type--radio) {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  column-gap: 0.625rem;
+  margin-inline-start: 0;
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.acquia-purge-varnish-form .apv-choices :is(.form-type-radio, .form-type--radio) > input {
+  position: static;
+  inset: auto;
+  float: none;
+  margin: 0.125rem 0 0;
+  transform: none;
+}
+
+.acquia-purge-varnish-form .apv-choices :is(.form-type-radio, .form-type--radio) > label {
+  grid-column: 2;
+  font-weight: 600;
+}
+
+.acquia-purge-varnish-form .apv-choices :is(.form-type-radio, .form-type--radio) > .description {
+  grid-column: 1 / -1;
+}
+
+.acquia-purge-varnish-form fieldset:has(.apv-choices) > :is(.fieldset__wrapper, .fieldset-wrapper) > .description,
+.acquia-purge-varnish-form fieldset:has(.apv-choices) .fieldset__description {
+  margin-block-start: 0.5rem;
+}
+
+.acquia-purge-varnish-form .apv-hint {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 400;
+  opacity: 0.75;
+}
+
+/* Callout replaces the two "Note:" lines. */
+.acquia-purge-varnish-form .apv-callout {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+  margin: 0.75rem 0;
+  padding: 0.625rem 0.875rem;
+  border: 1px solid var(--apv-line);
+  border-inline-start: 4px solid var(--apv-accent);
+  border-radius: var(--apv-radius);
+}
+
+.acquia-purge-varnish-form .apv-callout::before {
+  content: "";
+  flex: none;
+  inline-size: 1.125rem;
+  block-size: 1.125rem;
+  margin-block-start: 0.125rem;
+  background-color: var(--apv-accent);
+  mask: url("../images/icons/info.svg") center / contain no-repeat;
+}
+
+.acquia-purge-varnish-form .apv-callout--warning::before {
+  mask-image: url("../images/icons/warning.svg");
+}
+
+/* Logging checkbox gets its own divider row. */
+.acquia-purge-varnish-form .form-item-log-requests {
+  margin-block: 1rem 0;
+  padding-block-start: 1rem;
+  border-block-start: 1px solid var(--apv-line);
+}
+
+.acquia-purge-varnish-form code {
+  padding: 0 0.25rem;
+  border-radius: 0.25rem;
+  background: color-mix(in srgb, currentColor 8%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .acquia-purge-varnish-form * {
+    transition: none;
+    animation: none;
+  }
+}

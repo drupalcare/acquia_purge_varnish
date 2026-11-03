@@ -1,0 +1,6 @@
+# Acquia Purge Varnish libraries.
+
+form:
+  css:
+    theme:
+      css/acquia-purge-varnish-form.css: {}

@@ -45,7 +45,11 @@ Navigate to: **Configuration → Acquia Purge Varnish → Settings**
 
 Configure:
 1. **API Key** - Your Acquia Cloud Platform API Key
-2. **API Secret** - Your Acquia Cloud Platform API Secret
+2. **API Secret** - Your Acquia Cloud Platform API Secret. Once saved it is
+   never shown again on the form; leave the field blank to keep it, or enter a
+   new one to replace it. A secret saved here is stored in site config, so
+   `drush config:export` writes it to your config files; on production, set it
+   in `settings.php` instead (see below).
 3. **Application Name** - (Optional) Leave empty to auto-detect from `AH_SITE_GROUP`
 4. **Domain Setting** - Choose to purge all domains or current domain only
 5. **Log Requests** - Enable to log API requests for debugging
@@ -399,6 +403,10 @@ This is an open-source project with **no association** with Acquia Inc. The modu
 - **Acquia Cloud API v2 Documentation:** https://cloudapi-docs.acquia.com/
 - **Acquia Cloud Platform:** https://cloud.acquia.com
 - **Drupal Guzzle Documentation:** https://www.drupal.org/node/1862446
+
+## Icons
+
+The icons in `images/icons/` are Google Material Symbols (Apache-2.0, GPL-compatible), drawings unchanged, viewBox tightened to the painted edge.
 
 ## Contributing
 
