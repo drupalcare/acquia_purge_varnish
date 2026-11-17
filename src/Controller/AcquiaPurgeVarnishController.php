@@ -99,8 +99,16 @@ class AcquiaPurgeVarnishController extends ControllerBase {
       return FALSE;
     }
 
-    $current_host = $request->getSchemeAndHttpHost();
-    return str_starts_with($url, $current_host);
+    // Compare the parsed scheme, host and port exactly. A prefix check let
+    // "https://example.com.evil.test/" pass as "https://example.com".
+    $parts = parse_url($url);
+    if (!is_array($parts) || empty($parts['scheme']) || empty($parts['host'])) {
+      return FALSE;
+    }
+    $port = $parts['port'] ?? ($parts['scheme'] === 'https' ? 443 : 80);
+    return strtolower($parts['scheme']) === $request->getScheme()
+      && strtolower($parts['host']) === strtolower($request->getHost())
+      && (int) $port === (int) $request->getPort();
   }
 
   /**
